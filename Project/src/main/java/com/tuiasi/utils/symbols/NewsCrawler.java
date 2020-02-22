@@ -144,29 +144,37 @@ public class NewsCrawler {
                         .stock(stock)
                         .build())
         );
+        crawlImportantRecentArticles(articles, 10);
         return articles;
     }
 
     private void crawlImportantRecentArticles(Set<Article> articles, int noOfArticles) {
         Set<Article> articlesList = new TreeSet<Article>(articles);
         Iterator<Article> it = articlesList.iterator();
-        int articlesCrawled = 0;
-        while (it.hasNext() && ++articlesCrawled <= noOfArticles) {
+        int articlesCrawled = 1;
+        while (it.hasNext() && articlesCrawled <= noOfArticles) {
             Article article = it.next();
-            if (article.getLink().startsWith("http://markets.businessinsider.com")
-                    && article.getTitle().toLowerCase().contains(article.getStock().getCompany().split(" ")[0].toLowerCase()))
+
+            if (article.getLink().startsWith("http://markets.businessinsider.com")/*
+                    && (article.getTitle().toLowerCase().contains(article.getStock().getCompany().split("\\W+")[0].toLowerCase())
+                    || article.getTitle().toLowerCase().contains(article.getStock().getSymbol().toLowerCase()))*/) {
                 crawlArticleBody(article);
+                ++articlesCrawled;
+            }
         }
     }
 
-    private void crawlArticleBody(Article article){
+    private void crawlArticleBody(Article article) {
         Document doc = null;
         try {
             doc = Jsoup.connect(article.getLink()).get();
         } catch (IOException e) {
             log.error("Article " + article.getTitle() + " not found.");
+            return;
         }
-
+        String articleBody = doc.select("#site > div > div:nth-child(3) > div:nth-child(5) > div.col-md-8.col-xs-12 > div.row > div.col-xs-12.news-content.no-padding")
+                .text();
+        article.setBody(articleBody.substring(0, Math.min(1000, articleBody.length())));
     }
 
     private String getArticleLink(Element element) {
