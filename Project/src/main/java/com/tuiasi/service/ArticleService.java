@@ -1,0 +1,82 @@
+package com.tuiasi.service;
+
+import com.tuiasi.exception.DatabaseConnectionException;
+import com.tuiasi.exception.ObjectNotFoundException;
+import com.tuiasi.model.Article;
+import com.tuiasi.repository.ArticleRepository;
+import com.tuiasi.repository.ICrudRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@Slf4j
+public class ArticleService implements ICrudService<Article> {
+
+    private ArticleRepository repository;
+
+    @Autowired
+    public ArticleService(ICrudRepository<Article> articleRepository) {
+        this.repository= (ArticleRepository) articleRepository;
+    }
+
+    @Override
+    public Article add(Article article) {
+        try {
+            return repository.add(article);
+        } catch (Exception e) {
+            log.error("Could not add article with id: " + article.getId() + " : " + e.getMessage());
+            throw new DatabaseConnectionException(e);
+        }
+    }
+
+    @Override
+    public Article get(int id) throws ObjectNotFoundException {
+        try {
+            Optional<Article> article = repository.get(id);
+            return article
+                    .orElseThrow(() -> new ObjectNotFoundException("Article with id: " + id + " does not exist"));
+        } catch (Exception e) {
+            log.error("Could not get article with id: " + id + " : " + e.getMessage());
+            throw new DatabaseConnectionException(e);
+        }
+
+    }
+
+    @Override
+    public Article update(Article article, int id) throws ObjectNotFoundException {
+        try {
+            Optional<Article> result = repository.update(article, id);
+            return result
+                    .orElseThrow(() -> new ObjectNotFoundException("Article with id: " + article.getId() + " does not exist"));
+        } catch (Exception e) {
+            log.error("Could not update article with id: " + id + " : " + e.getMessage());
+            throw new DatabaseConnectionException(e);
+        }
+    }
+
+    @Override
+    public void delete(int id) {
+        try {
+            repository.delete(id);
+        } catch (ObjectNotFoundException e) {
+            log.error(e.getMessage());
+        } catch (Exception e) {
+            log.error("Could not delete article with id: " + id + " : " + e.getMessage());
+            throw new DatabaseConnectionException(e);
+        }
+    }
+
+    public List<Article> getAll() {
+        try {
+            return repository.getAll();
+        } catch (Exception e) {
+            log.error("Could not retrieve all articles: " + e.getMessage());
+            throw new DatabaseConnectionException(e);
+        }
+    }
+
+}
