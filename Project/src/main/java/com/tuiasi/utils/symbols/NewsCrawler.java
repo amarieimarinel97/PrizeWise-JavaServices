@@ -2,8 +2,10 @@ package com.tuiasi.utils.symbols;
 
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.model.Article;
+import com.tuiasi.model.Recommendation;
 import com.tuiasi.model.Stock;
 import com.tuiasi.model.StockInformation;
+import javafx.collections.transformation.SortedList;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,6 +17,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
@@ -87,9 +90,80 @@ public class NewsCrawler {
 
         StringBuilder recommendationsString = new StringBuilder();
         Elements recommendationsHTML = document.select("div.box > div.hidden-xs tr > td:eq(4)");
+        Iterator<Element> recommendationsIterator = document.select("div.box > div.hidden-xs tr > td.h5, div.box > div.hidden-xs tr > td:eq(4)").iterator();
+
+        List<Recommendation> recommendations = new ArrayList<>();
+        while (recommendationsIterator.hasNext()) {
+            recommendations.add(Recommendation.builder()
+                    .date(getDate(recommendationsIterator.next().text()))
+                    .text(recommendationsIterator.next().text())
+                    .build());
+        }
+
+        System.out.println(computeExpertsRecommendationCoefficient2(recommendations));
+
         recommendationsHTML.forEach(el -> recommendationsString.append(el.text()).append("\n"));
         return computeExpertsRecommendationCoefficient(recommendationsString.toString().split("\n"));
     }
+
+    private Date getDate(String dateStr) {
+        String[] mmddyy = dateStr.split("/");
+        Date result = new Date();
+        result.setMonth(Integer.parseInt(mmddyy[0]) - 1);
+        result.setDate(Integer.parseInt(mmddyy[1]));
+        result.setYear(100 + Integer.parseInt(mmddyy[2]));
+        return result;
+
+    }
+
+    public static long getDateDiff(Date date1, Date date2, TimeUnit timeUnit) {
+        long diffInMillis = date2.getTime() - date1.getTime();
+        return timeUnit.convert(diffInMillis, TimeUnit.MILLISECONDS);
+    }
+
+
+    private Double computeExpertsRecommendationCoefficient2(List<Recommendation> recommendations) {
+        Double totalRecommendationPoints = 0.0;
+        Double totalRecommendations = 0.0;
+
+        recommendations.sort(Recommendation.comparatorByDate);
+        Date minDate = recommendations.get(0).getDate();
+
+        Date maxDate = new Date();
+        long daysInterval = getDateDiff(minDate, maxDate, TimeUnit.DAYS);
+        daysInterval = daysInterval == 0 ? 1 : daysInterval;
+
+        for (Recommendation currentRecommendation : recommendations) {
+            double currentCoefficient = 0.0;
+            switch (currentRecommendation.getText().toLowerCase()) {
+                case "upgraded to market outperform":
+                case "upgraded to buy":
+                    currentCoefficient = 5.0;
+                    break;
+                case "upgraded to overweight":
+                    currentCoefficient = 2.5;
+                    break;
+                case "hold":
+                    currentCoefficient = 0.0;
+                    break;
+                case "downgraded to underweight":
+                    currentCoefficient = -2.5;
+                    break;
+                case "downgraded to market underperform":
+                case "downgraded to sell":
+                    currentCoefficient = -5.0;
+                    break;
+                default:
+                    log.info("Recommendation not found.");
+                    continue;
+            }
+            currentRecommendation.setPoints(currentCoefficient * 1.5 * getDateDiff(currentRecommendation.getDate(), maxDate, TimeUnit.DAYS) / daysInterval);
+            totalRecommendationPoints += currentRecommendation.getPoints();
+            ++totalRecommendations;
+        }
+        return totalRecommendationPoints / totalRecommendations;
+    }
+
 
     private Double computeExpertsRecommendationCoefficient(String[] recommendationsArr) {
         Double totalRecommendationPoints = 0.0;
@@ -144,7 +218,7 @@ public class NewsCrawler {
                         .stock(stock)
                         .build())
         );
-        crawlImportantRecentArticles(articles, 10);
+        crawlImportantRecentArticles(articles, 0);
         return articles;
     }
 
