@@ -5,7 +5,6 @@ import com.tuiasi.model.Article;
 import com.tuiasi.model.Recommendation;
 import com.tuiasi.model.Stock;
 import com.tuiasi.model.StockInformation;
-import javafx.collections.transformation.SortedList;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -87,7 +86,6 @@ public class NewsCrawler {
             log.error("Symbol " + symbol + " not found.");
             throw new ObjectNotFoundException("Symbol " + symbol + " not found.");
         }
-
         StringBuilder recommendationsString = new StringBuilder();
         Elements recommendationsHTML = document.select("div.box > div.hidden-xs tr > td:eq(4)");
         Iterator<Element> recommendationsIterator = document.select("div.box > div.hidden-xs tr > td.h5, div.box > div.hidden-xs tr > td:eq(4)").iterator();
@@ -100,10 +98,12 @@ public class NewsCrawler {
                     .build());
         }
 
-        System.out.println(computeExpertsRecommendationCoefficient2(recommendations));
+        Double ERC1 = computeExpertsRecommendationCoefficient(recommendations);
+        ERC1 = ERC1 > 5 ? 5 : ERC1;
+        String theirRating = document.select("div.rating-label").text();
+        Double ERC2 = theirRating.isEmpty() ? ERC1 : 5 - 2.5 * (Double.parseDouble(theirRating) - 1);
 
-        recommendationsHTML.forEach(el -> recommendationsString.append(el.text()).append("\n"));
-        return computeExpertsRecommendationCoefficient(recommendationsString.toString().split("\n"));
+        return theirRating.isEmpty() ? ERC1 : (ERC1 + ERC2) / 2;
     }
 
     private Date getDate(String dateStr) {
@@ -122,7 +122,7 @@ public class NewsCrawler {
     }
 
 
-    private Double computeExpertsRecommendationCoefficient2(List<Recommendation> recommendations) {
+    private Double computeExpertsRecommendationCoefficient(List<Recommendation> recommendations) {
         Double totalRecommendationPoints = 0.0;
         Double totalRecommendations = 0.0;
 
@@ -160,41 +160,6 @@ public class NewsCrawler {
             currentRecommendation.setPoints(currentCoefficient * 1.5 * getDateDiff(currentRecommendation.getDate(), maxDate, TimeUnit.DAYS) / daysInterval);
             totalRecommendationPoints += currentRecommendation.getPoints();
             ++totalRecommendations;
-        }
-        return totalRecommendationPoints / totalRecommendations;
-    }
-
-
-    private Double computeExpertsRecommendationCoefficient(String[] recommendationsArr) {
-        Double totalRecommendationPoints = 0.0;
-        Double totalRecommendations = 0.0;
-
-        for (int i = 0; i < recommendationsArr.length; ++i) {
-            switch (recommendationsArr[i].toLowerCase()) {
-                case "upgraded to market outperform":
-                case "upgraded to buy":
-                    totalRecommendationPoints += 5;
-                    ++totalRecommendations;
-                    break;
-                case "upgraded to overweight":
-                    totalRecommendationPoints += 2.5;
-                    ++totalRecommendations;
-                    break;
-                case "hold":
-                    ++totalRecommendations;
-                    break;
-                case "downgraded to underweight":
-                    totalRecommendationPoints -= 2.5;
-                    ++totalRecommendations;
-                    break;
-                case "downgraded to market underperform":
-                case "downgraded to sell":
-                    totalRecommendationPoints -= 5;
-                    ++totalRecommendations;
-                    break;
-                default:
-                    log.info("Recommendation not found.");
-            }
         }
         return totalRecommendationPoints / totalRecommendations;
     }
