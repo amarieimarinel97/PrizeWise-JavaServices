@@ -32,16 +32,18 @@ public class CrawlController {
         return this.crawlService.crawlSubreddit(subReddit, saveInDatabase.orElse(false), noOfPages.orElse(1));
     }
 
-    @GetMapping("/stock")
-    public Stock crawlStock(@RequestParam(name="stock")String stock,
-                            @RequestParam(name="save")Optional<Boolean> saveInDatabase){
-        return this.crawlService.crawlStock(stock, saveInDatabase.orElse(false)).getStock();
+
+
+    @GetMapping("/bi")
+    public StockInformation crawlBusinessInsider(@RequestParam(name="stock")String stock,
+                                                  @RequestParam(name="save")Optional<Boolean> saveInDatabase){
+        return this.crawlService.crawlBussinessInsider(stock, saveInDatabase.orElse(false));
     }
 
-    @GetMapping("/stockinfo")
-    public StockInformation crawlStockInformation(@RequestParam(name="stock")String stock,
+    @GetMapping("/mw")
+    public StockInformation crawlMarketWatch(@RequestParam(name="stock")String stock,
                                                   @RequestParam(name="save")Optional<Boolean> saveInDatabase){
-        return this.crawlService.crawlStock(stock, saveInDatabase.orElse(false));
+        return this.crawlService.crawlMarketWatch(stock, saveInDatabase.orElse(false));
     }
 
 

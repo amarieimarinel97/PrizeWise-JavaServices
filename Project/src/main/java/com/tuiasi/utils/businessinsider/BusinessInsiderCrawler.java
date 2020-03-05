@@ -1,4 +1,4 @@
-package com.tuiasi.utils.symbols;
+package com.tuiasi.utils.businessinsider;
 
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.model.Article;
@@ -12,38 +12,13 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
-public class NewsCrawler {
-
-    private static String convertXPathToJsoupSyntax(String xpath) {
-        if (xpath.charAt(0) == '/')
-            xpath = xpath.substring(1);
-
-        StringBuilder result = new StringBuilder();
-        for (char c : xpath.toCharArray()) {
-            switch (c) {
-                case '[':
-                    result.append(":eq(");
-                    break;
-                case ']':
-                    result.append(")");
-                    break;
-                case '/':
-                    result.append(" > ");
-                    break;
-                default:
-                    result.append(c);
-            }
-        }
-        return result.toString();
-    }
+public class BusinessInsiderCrawler {
 
     public StockInformation crawlStockInfo(String[] companyInfo) {
         String symbol = companyInfo[0];
@@ -56,7 +31,6 @@ public class NewsCrawler {
             log.error("Symbol " + symbol + " not found.");
             throw new ObjectNotFoundException("Symbol " + symbol + " not found.");
         }
-
         Double price = Double.parseDouble(
                 doc.select("#site > div > div:nth-child(2) > div.row.equalheights.greyBorder > div > div:nth-child(3) > div.col-sm-10.no-padding > div:nth-child(3) > div:nth-child(2) > span")
                         .text()
@@ -86,8 +60,6 @@ public class NewsCrawler {
             log.error("Symbol " + symbol + " not found.");
             throw new ObjectNotFoundException("Symbol " + symbol + " not found.");
         }
-        StringBuilder recommendationsString = new StringBuilder();
-        Elements recommendationsHTML = document.select("div.box > div.hidden-xs tr > td:eq(4)");
         Iterator<Element> recommendationsIterator = document.select("div.box > div.hidden-xs tr > td.h5, div.box > div.hidden-xs tr > td:eq(4)").iterator();
 
         List<Recommendation> recommendations = new ArrayList<>();
@@ -117,7 +89,7 @@ public class NewsCrawler {
     }
 
     public static long getDateDiff(Date date1, Date date2, TimeUnit timeUnit) {
-        long diffInMillis = date2.getTime() - date1.getTime();
+        long diffInMillis = date1.getTime() - date2.getTime();
         return timeUnit.convert(diffInMillis, TimeUnit.MILLISECONDS);
     }
 
@@ -130,7 +102,7 @@ public class NewsCrawler {
         Date minDate = recommendations.get(0).getDate();
 
         Date maxDate = new Date();
-        long daysInterval = getDateDiff(minDate, maxDate, TimeUnit.DAYS);
+        long daysInterval = getDateDiff(maxDate, minDate, TimeUnit.DAYS);
         daysInterval = daysInterval == 0 ? 1 : daysInterval;
 
         for (Recommendation currentRecommendation : recommendations) {
@@ -157,7 +129,7 @@ public class NewsCrawler {
                     log.info("Recommendation not found.");
                     continue;
             }
-            currentRecommendation.setPoints(currentCoefficient * 1.5 * getDateDiff(currentRecommendation.getDate(), maxDate, TimeUnit.DAYS) / daysInterval);
+            currentRecommendation.setPoints(currentCoefficient * 1.5 * getDateDiff(maxDate, currentRecommendation.getDate(), TimeUnit.DAYS) / daysInterval);
             totalRecommendationPoints += currentRecommendation.getPoints();
             ++totalRecommendations;
         }
@@ -240,20 +212,4 @@ public class NewsCrawler {
         }
     }
 
-    private void writeToFile(String fileName, String str, boolean append) {
-        BufferedWriter writer = null;
-        try {
-            writer = new BufferedWriter(new FileWriter(fileName, append));
-            writer.write(str);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                writer.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
 }

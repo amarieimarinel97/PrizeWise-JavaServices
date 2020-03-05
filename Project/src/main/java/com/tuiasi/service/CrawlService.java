@@ -3,11 +3,11 @@ package com.tuiasi.service;
 
 import com.tuiasi.model.Article;
 import com.tuiasi.model.Site;
-import com.tuiasi.model.Stock;
 import com.tuiasi.model.StockInformation;
-import com.tuiasi.utils.Crawler;
-import com.tuiasi.utils.symbols.NewsCrawler;
-import com.tuiasi.utils.symbols.StockUtils;
+import com.tuiasi.utils.marketwatch.MarketwatchCrawler;
+import com.tuiasi.utils.reddit.RedditCrawler;
+import com.tuiasi.utils.businessinsider.BusinessInsiderCrawler;
+import com.tuiasi.utils.StockUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,23 +19,25 @@ import java.util.List;
 @Slf4j
 public class CrawlService {
 
-    private Crawler crawler;
+    private RedditCrawler redditCrawler;
     private ArticleService articleService;
-    private NewsCrawler newsCrawler;
+    private BusinessInsiderCrawler businessInsiderCrawler;
     private StockService stockService;
     private StockUtils stockUtils;
+    private MarketwatchCrawler marketwatchCrawler;
 
     @Autowired
-    public CrawlService(StockUtils stockUtils, Crawler crawler, ArticleService articleService, StockService stockService, NewsCrawler newsCrawler) {
-        this.crawler = crawler;
+    public CrawlService(RedditCrawler redditCrawler, ArticleService articleService, BusinessInsiderCrawler businessInsiderCrawler, StockService stockService, StockUtils stockUtils, MarketwatchCrawler marketwatchCrawler) {
+        this.redditCrawler = redditCrawler;
         this.articleService = articleService;
+        this.businessInsiderCrawler = businessInsiderCrawler;
         this.stockService = stockService;
-        this.newsCrawler = newsCrawler;
         this.stockUtils = stockUtils;
+        this.marketwatchCrawler = marketwatchCrawler;
     }
 
     public List<Article> crawlSubreddit(String subreddit, boolean saveInDatabase, int noOfPages) {
-        List<Article> articles = new ArrayList<>(crawler.crawlSubReddit(subreddit, noOfPages));
+        List<Article> articles = new ArrayList<>(redditCrawler.crawlSubReddit(subreddit, noOfPages));
         Site site = Site.builder()
                 .domain("http://www.reddit.com/")
                 .path("r/" + subreddit)
@@ -48,8 +50,17 @@ public class CrawlService {
         return articles;
     }
 
-    public StockInformation crawlStock(String stock, boolean saveInDatabase) {
-        StockInformation stockInfo = newsCrawler.crawlStockInfo(stockUtils.searchCompanyAndStock(stock));
+    public StockInformation crawlBussinessInsider(String stock, boolean saveInDatabase) {
+        StockInformation stockInfo = businessInsiderCrawler.crawlStockInfo(stockUtils.searchStockByCompany(stock));
+        if (saveInDatabase) {
+            stockService.add(stockInfo.getStock());
+            stockInfo.getArticles().forEach(article -> articleService.add(article));
+        }
+        return stockInfo;
+    }
+
+    public StockInformation crawlMarketWatch(String stock, boolean saveInDatabase){
+        StockInformation stockInfo = marketwatchCrawler.crawlStockInfo(stockUtils.searchStockByCompany(stock));
         if (saveInDatabase) {
             stockService.add(stockInfo.getStock());
             stockInfo.getArticles().forEach(article -> articleService.add(article));

@@ -1,4 +1,4 @@
-package com.tuiasi.utils;
+package com.tuiasi.utils.reddit;
 
 import com.tuiasi.model.Article;
 import lombok.Builder;

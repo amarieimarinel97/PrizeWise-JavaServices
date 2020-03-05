@@ -1,4 +1,4 @@
-package com.tuiasi.utils;
+package com.tuiasi.utils.reddit;
 
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.model.Article;
@@ -17,7 +17,7 @@ import java.util.Set;
 
 @Component
 @Slf4j
-public class Crawler {
+public class RedditCrawler {
 
     private String lastCrawledArticleId;
 
