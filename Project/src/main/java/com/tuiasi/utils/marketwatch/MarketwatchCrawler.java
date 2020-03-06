@@ -5,8 +5,6 @@ import com.tuiasi.model.Article;
 import com.tuiasi.model.Recommendation;
 import com.tuiasi.model.Stock;
 import com.tuiasi.model.StockInformation;
-import com.tuiasi.utils.StockUtils;
-import com.tuiasi.utils.businessinsider.BusinessInsiderCrawler;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -14,7 +12,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -69,7 +66,6 @@ public class MarketwatchCrawler {
         Set<Article> articles = new HashSet<>();
 
         Elements articlesHTML = document.select("mw-scrollable-news > div.collection__list[data-type=MarketWatch] > div");
-        articlesHTML.forEach(el -> System.out.println("---------------------------------------\n" + el.html() + "\n"));
 
         articlesHTML.forEach(el ->
                 articles.add(
@@ -81,10 +77,6 @@ public class MarketwatchCrawler {
                                 .build()
                 ));
 
-//        crawlImportantRecentArticles(articles, 0);
-        for(Article article : articles){
-            System.out.println("---------------------------\n"+article.toString()+"\n");
-        }
         return articles;
     }
 
@@ -97,7 +89,6 @@ public class MarketwatchCrawler {
             log.error("Date could not be parsed for given article");
             return 0.0;
         }
-        System.out.println("Article date text - "+text + " date type - "+articleDate.toString());
         return (double)getDateDiff(new Date(), articleDate, TimeUnit.HOURS);
     }
 

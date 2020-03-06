@@ -8,6 +8,7 @@ import com.tuiasi.utils.marketwatch.MarketwatchCrawler;
 import com.tuiasi.utils.reddit.RedditCrawler;
 import com.tuiasi.utils.businessinsider.BusinessInsiderCrawler;
 import com.tuiasi.utils.StockUtils;
+import com.tuiasi.utils.yahoofinance.YahooFinanceCrawler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,15 +26,17 @@ public class CrawlService {
     private StockService stockService;
     private StockUtils stockUtils;
     private MarketwatchCrawler marketwatchCrawler;
+    private YahooFinanceCrawler yahooFinanceCrawler;
 
     @Autowired
-    public CrawlService(RedditCrawler redditCrawler, ArticleService articleService, BusinessInsiderCrawler businessInsiderCrawler, StockService stockService, StockUtils stockUtils, MarketwatchCrawler marketwatchCrawler) {
+    public CrawlService(RedditCrawler redditCrawler, ArticleService articleService, BusinessInsiderCrawler businessInsiderCrawler, StockService stockService, StockUtils stockUtils, MarketwatchCrawler marketwatchCrawler, YahooFinanceCrawler yahooFinanceCrawler) {
         this.redditCrawler = redditCrawler;
         this.articleService = articleService;
         this.businessInsiderCrawler = businessInsiderCrawler;
         this.stockService = stockService;
         this.stockUtils = stockUtils;
         this.marketwatchCrawler = marketwatchCrawler;
+        this.yahooFinanceCrawler = yahooFinanceCrawler;
     }
 
     public List<Article> crawlSubreddit(String subreddit, boolean saveInDatabase, int noOfPages) {
@@ -61,6 +64,15 @@ public class CrawlService {
 
     public StockInformation crawlMarketWatch(String stock, boolean saveInDatabase){
         StockInformation stockInfo = marketwatchCrawler.crawlStockInfo(stockUtils.searchStockByCompany(stock));
+        if (saveInDatabase) {
+            stockService.add(stockInfo.getStock());
+            stockInfo.getArticles().forEach(article -> articleService.add(article));
+        }
+        return stockInfo;
+    }
+
+    public StockInformation crawlYahooFinance(String stock, boolean saveInDatabase){
+        StockInformation stockInfo = yahooFinanceCrawler.crawlStockInfo(stockUtils.searchStockByCompany(stock));
         if (saveInDatabase) {
             stockService.add(stockInfo.getStock());
             stockInfo.getArticles().forEach(article -> articleService.add(article));
