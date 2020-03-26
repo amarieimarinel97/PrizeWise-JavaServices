@@ -32,7 +32,7 @@ public class BusinessInsiderCrawler {
             throw new ObjectNotFoundException("Symbol " + symbol + " not found.");
         }
         Double price = Double.parseDouble(
-                doc.select("#site > div > div:nth-child(2) > div.row.equalheights.greyBorder > div > div:nth-child(3) > div.col-sm-10.no-padding > div:nth-child(3) > div:nth-child(2) > span")
+                doc.select("div > div[data-field=Mid] > span.push-data")
                         .text()
                         .replaceAll("[^0-9.]", ""));
 
@@ -146,7 +146,7 @@ public class BusinessInsiderCrawler {
             log.error("Symbol " + symbol + " not found.");
             throw new ObjectNotFoundException("Symbol " + symbol + " not found.");
         }
-        Elements articlesHTML = doc.select("#site > div > div:nth-child(2) > div.row.equalheights.greyBorder > div > div.box > div.box.news-by-company");
+        Elements articlesHTML = doc.select("div.news-by-company");
         articlesHTML.select("div.col-md-12").forEach(element ->
                 articles.add(Article.builder()
                         .title(element.select(".news-link").text())
@@ -155,7 +155,7 @@ public class BusinessInsiderCrawler {
                         .stock(stock)
                         .build())
         );
-        crawlImportantRecentArticles(articles, 0);
+        crawlImportantRecentArticles(articles, 10);
         return articles;
     }
 
@@ -183,7 +183,7 @@ public class BusinessInsiderCrawler {
             log.error("Article " + article.getTitle() + " not found.");
             return;
         }
-        String articleBody = doc.select("#site > div > div:nth-child(3) > div:nth-child(5) > div.col-md-8.col-xs-12 > div.row > div.col-xs-12.news-content.no-padding")
+        String articleBody = doc.select("div.news-content")
                 .text();
         article.setBody(articleBody.substring(0, Math.min(1000, articleBody.length())));
     }

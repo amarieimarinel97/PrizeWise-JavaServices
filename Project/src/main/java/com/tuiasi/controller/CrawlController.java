@@ -2,8 +2,8 @@ package com.tuiasi.controller;
 
 
 import com.tuiasi.model.Article;
-import com.tuiasi.model.Stock;
 import com.tuiasi.model.StockInformation;
+import com.tuiasi.service.AlgorithmService;
 import com.tuiasi.service.CrawlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +17,6 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/crawl")
 public class CrawlController {
-
     private CrawlService crawlService;
 
     @Autowired
@@ -37,7 +36,7 @@ public class CrawlController {
     @GetMapping("/bi")
     public StockInformation crawlBusinessInsider(@RequestParam(name="stock")String stock,
                                                   @RequestParam(name="save")Optional<Boolean> saveInDatabase){
-        return this.crawlService.crawlBussinessInsider(stock, saveInDatabase.orElse(false));
+        return this.crawlService.crawlBusinessInsider(stock, saveInDatabase.orElse(false));
     }
 
     @GetMapping("/mw")

@@ -16,6 +16,7 @@ public class StockUtils {
         final String uri = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query=" + searchKey + "&region=1&lang=en&callback=YAHOO.Finance.SymbolSuggest.ssCallback";
 
         String[] symbols = new RestTemplate().getForObject(uri, String.class).split("\"");
+
         int i;
         String symbol = "";
         String companyName = "";

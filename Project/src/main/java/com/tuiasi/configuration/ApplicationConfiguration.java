@@ -16,6 +16,9 @@ import javax.persistence.EntityManagerFactory;
 @PropertySource("classpath:application.properties")
 public class ApplicationConfiguration {
 
+    @Value("python.algorithm.server")
+    public String pythonAlgorithmServerAddress;
+
     @Value("${spring.datasource.driver}")
     private String driver;
 

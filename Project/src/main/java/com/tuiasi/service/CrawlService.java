@@ -20,6 +20,7 @@ import java.util.List;
 @Slf4j
 public class CrawlService {
 
+    private AlgorithmService algorithmService;
     private RedditCrawler redditCrawler;
     private ArticleService articleService;
     private BusinessInsiderCrawler businessInsiderCrawler;
@@ -29,7 +30,8 @@ public class CrawlService {
     private YahooFinanceCrawler yahooFinanceCrawler;
 
     @Autowired
-    public CrawlService(RedditCrawler redditCrawler, ArticleService articleService, BusinessInsiderCrawler businessInsiderCrawler, StockService stockService, StockUtils stockUtils, MarketwatchCrawler marketwatchCrawler, YahooFinanceCrawler yahooFinanceCrawler) {
+    public CrawlService(AlgorithmService algorithmService, RedditCrawler redditCrawler, ArticleService articleService, BusinessInsiderCrawler businessInsiderCrawler, StockService stockService, StockUtils stockUtils, MarketwatchCrawler marketwatchCrawler, YahooFinanceCrawler yahooFinanceCrawler) {
+        this.algorithmService = algorithmService;
         this.redditCrawler = redditCrawler;
         this.articleService = articleService;
         this.businessInsiderCrawler = businessInsiderCrawler;
@@ -53,8 +55,11 @@ public class CrawlService {
         return articles;
     }
 
-    public StockInformation crawlBussinessInsider(String stock, boolean saveInDatabase) {
-        StockInformation stockInfo = businessInsiderCrawler.crawlStockInfo(stockUtils.searchStockByCompany(stock));
+    public StockInformation crawlBusinessInsider(String stock, boolean saveInDatabase) {
+        String[] stockSymbolAndCompany = stockUtils.searchStockByCompany(stock);
+        StockInformation stockInfo = businessInsiderCrawler.crawlStockInfo(stockSymbolAndCompany);
+        stockInfo.getStock().setHistoryOptimismCoefficient(algorithmService.getPredictionBasedOnHistory(stockSymbolAndCompany[0], 3));
+
         if (saveInDatabase) {
             stockService.add(stockInfo.getStock());
             stockInfo.getArticles().forEach(article -> articleService.add(article));
@@ -62,7 +67,7 @@ public class CrawlService {
         return stockInfo;
     }
 
-    public StockInformation crawlMarketWatch(String stock, boolean saveInDatabase){
+    public StockInformation crawlMarketWatch(String stock, boolean saveInDatabase) {
         StockInformation stockInfo = marketwatchCrawler.crawlStockInfo(stockUtils.searchStockByCompany(stock));
         if (saveInDatabase) {
             stockService.add(stockInfo.getStock());
@@ -71,7 +76,7 @@ public class CrawlService {
         return stockInfo;
     }
 
-    public StockInformation crawlYahooFinance(String stock, boolean saveInDatabase){
+    public StockInformation crawlYahooFinance(String stock, boolean saveInDatabase) {
         StockInformation stockInfo = yahooFinanceCrawler.crawlStockInfo(stockUtils.searchStockByCompany(stock));
         if (saveInDatabase) {
             stockService.add(stockInfo.getStock());
