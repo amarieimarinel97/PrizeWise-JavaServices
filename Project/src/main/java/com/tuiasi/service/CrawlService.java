@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -56,14 +57,47 @@ public class CrawlService {
     }
 
     public StockInformation crawlBusinessInsider(String stock, boolean saveInDatabase) {
-        String[] stockSymbolAndCompany = stockUtils.searchStockByCompany(stock);
-        StockInformation stockInfo = businessInsiderCrawler.crawlStockInfo(stockSymbolAndCompany);
-        stockInfo.getStock().setHistoryOptimismCoefficient(algorithmService.getPredictionBasedOnHistory(stockSymbolAndCompany[0], 3));
+        long start;
+        float elapsedTimeSec;
 
+        start = System.currentTimeMillis();
+        String[] stockSymbolAndCompany = stockUtils.searchStockByCompany(stock);
+        elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
+        System.out.println("Time elapsed getting symbol: " + elapsedTimeSec + "s.");
+
+        start = System.currentTimeMillis();
+        StockInformation stockInfo = businessInsiderCrawler.crawlStockInfo(stockSymbolAndCompany);
+        elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
+        System.out.println("Time elapsed crawling stock and articles: " + elapsedTimeSec + "s.");
+
+        start = System.currentTimeMillis();
+        stockInfo.getStock().setHistoryOptimismCoefficient(algorithmService.getPredictionBasedOnHistory(stockSymbolAndCompany[0], 3));
+        elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
+        System.out.println("Time elapsed getting stock regression prediction: " + elapsedTimeSec + "s.");
+
+        start = System.currentTimeMillis();
+        stockInfo.getStock().setNewsOptimismCoefficient(
+                algorithmService.getArticlesSentimentAnalysis(stockInfo.getArticles(), false));
+        elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
+        System.out.println("Time elapsed getting sentiment analysis results(array): " + elapsedTimeSec + "s.");
+
+        stockInfo.getStock().setPredictedChange(
+                ((stockInfo.getStock().getExpertsRecommendationCoefficient()+5)/10.0
+                +
+                        stockInfo.getStock().getHistoryOptimismCoefficient()/100.0
+                +
+                        stockInfo.getStock().getNewsOptimismCoefficient()
+                )/3.0*10
+
+        );
         if (saveInDatabase) {
+            start = System.currentTimeMillis();
             stockService.add(stockInfo.getStock());
             stockInfo.getArticles().forEach(article -> articleService.add(article));
+            elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
+            System.out.println("Time elapsed storing in db: " + elapsedTimeSec + "s.");
         }
+        System.out.println("--------------------------------------");
         return stockInfo;
     }
 

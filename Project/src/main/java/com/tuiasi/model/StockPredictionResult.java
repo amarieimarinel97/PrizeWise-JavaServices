@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class StockRegressionPrediction {
+public class StockPredictionResult {
     private Double[] prediction;
     private Double[] changes;
     private Double[] deviation;

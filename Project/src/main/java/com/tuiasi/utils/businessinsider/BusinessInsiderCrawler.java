@@ -137,7 +137,7 @@ public class BusinessInsiderCrawler {
     }
 
     private Set<Article> crawlStockArticles(String symbol, Stock stock) {
-        Set<Article> articles = new HashSet<>();
+        Set<Article> articles = new TreeSet<>();
 
         Document doc = null;
         try {
@@ -155,7 +155,7 @@ public class BusinessInsiderCrawler {
                         .stock(stock)
                         .build())
         );
-        crawlImportantRecentArticles(articles, 10);
+        crawlImportantRecentArticles(articles, 0);
         return articles;
     }
 
