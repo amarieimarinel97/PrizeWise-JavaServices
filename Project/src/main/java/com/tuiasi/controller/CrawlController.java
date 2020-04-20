@@ -6,15 +6,13 @@ import com.tuiasi.model.StockInformation;
 import com.tuiasi.service.AlgorithmService;
 import com.tuiasi.service.CrawlService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
+@CrossOrigin(origins="*")
 @RequestMapping("/api/crawl")
 public class CrawlController {
     private CrawlService crawlService;
