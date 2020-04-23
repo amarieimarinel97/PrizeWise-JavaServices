@@ -24,7 +24,6 @@ public class Article implements Comparable {
     @Column
     private String title;
 
-
     @Column(length = 1000)
     private String body;
 
