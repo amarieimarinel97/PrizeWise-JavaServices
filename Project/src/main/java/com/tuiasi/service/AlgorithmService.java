@@ -54,19 +54,32 @@ public class AlgorithmService {
         return 0;
     }
 
-    public double getArticlesSentimentAnalysis(Set<Article> articles, boolean isSentAsString) {
+    public static double getAverage(double[] input) {
+        if (input.length == 0)
+            return 0.5;
+
+        double sum = 0.0;
+        for (double number : input)
+            sum = sum + number;
+        return sum / input.length;
+    }
+
+    public double getArticlesSentimentAnalysis(Set<Article> articleSet, boolean isSentAsString) {
+        List<Article> articleList = new ArrayList<>(articleSet);
         if (isSentAsString) {
             StringBuilder sb = new StringBuilder();
-            for (Article art : articles)
+            for (Article art : articleList)
                 sb.append(art.getTitle()).append("|");
             return this.getSentimentAnalysis(sb.toString());
         } else {
             List<String> textToSendToAnalysis = new ArrayList<>();
-            for (Article art : articles) {
+            for (Article art : articleList) {
                 textToSendToAnalysis.add(art.getTitle());
             }
-            return Arrays.stream(this.getSentimentAnalysis(textToSendToAnalysis.toArray(new String[0])))
-                    .average().orElse(0);
+            double[] sentimentAnalysisResult = this.getSentimentAnalysis(textToSendToAnalysis.toArray(new String[0]));
+            for (int i = 0; i < sentimentAnalysisResult.length; ++i)
+                articleList.get(i).setSentimentAnalysis(sentimentAnalysisResult[i]);
+            return getAverage(sentimentAnalysisResult);
         }
     }
 

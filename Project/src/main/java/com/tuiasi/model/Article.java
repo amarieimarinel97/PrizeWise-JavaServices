@@ -38,6 +38,10 @@ public class Article implements Comparable {
     @Column(unique = true)
     private String link;
 
+    @Column(name = "sentiment_analysis")
+    private Double sentimentAnalysis;
+
+
     @JsonAnyGetter
     private Map<String, String> getStockInfo() {
         Map<String, String> stockInfo = new HashMap<>();
