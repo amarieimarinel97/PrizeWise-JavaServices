@@ -31,10 +31,7 @@ public class BusinessInsiderCrawler {
             log.error("Symbol " + symbol + " not found.");
             throw new ObjectNotFoundException("Symbol " + symbol + " not found.");
         }
-        Double price = Double.parseDouble(
-                doc.select("div > div[data-field=Mid] > span.push-data")
-                        .text()
-                        .replaceAll("[^0-9.]", ""));
+        Double price = getPriceFromPage(doc);
 
         Stock stock = Stock.builder()
                 .company(companyName)
@@ -52,6 +49,17 @@ public class BusinessInsiderCrawler {
                 .build();
     }
 
+    private double getPriceFromPage(Document doc) {
+        return Double.parseDouble(
+                doc.select("div > div[data-field=Mid] > span.push-data")
+                        .text()
+                        .replaceAll("[^0-9.]", ""));
+    }
+
+    private boolean isDateFormat(String input) {
+        return input.contains("/");
+    }
+
     private Double crawlExpertsRecommendationCoefficient(String symbol) {
         Document document = null;
         try {
@@ -64,10 +72,16 @@ public class BusinessInsiderCrawler {
 
         List<Recommendation> recommendations = new ArrayList<>();
         while (recommendationsIterator.hasNext()) {
-            recommendations.add(Recommendation.builder()
-                    .date(getDate(recommendationsIterator.next().text()))
-                    .text(recommendationsIterator.next().text())
-                    .build());
+            Recommendation recommendation = Recommendation.builder().build();
+            String nextElement = recommendationsIterator.next().text();
+            if (isDateFormat(nextElement)) {
+                recommendation.setDate(getDate(nextElement));
+                recommendation.setText(recommendationsIterator.next().text());
+            } else {
+                recommendation.setText(nextElement);
+                recommendation.setDate(getDate(recommendationsIterator.next().text()));
+            }
+            recommendations.add(recommendation);
         }
 
         Double ERC1 = computeExpertsRecommendationCoefficient(recommendations);
@@ -75,15 +89,15 @@ public class BusinessInsiderCrawler {
         String theirRating = document.select("div.rating-label").text();
         Double ERC2 = theirRating.isEmpty() ? ERC1 : 5 - 2.5 * (Double.parseDouble(theirRating) - 1);
 
-        return theirRating.isEmpty() ? ERC1*2 : (ERC1 + ERC2);
+        return theirRating.isEmpty() ? ERC1 * 2 : (ERC1 + ERC2);
     }
 
     private Date getDate(String dateStr) {
         String[] mmddyy = dateStr.split("/");
         Date result = new Date();
-        result.setMonth(Integer.parseInt(mmddyy[0]) - 1);
+        result.setMonth(Integer.parseInt(mmddyy[0].substring(Math.max(mmddyy[0].length() - 2, 0))) - 1);
         result.setDate(Integer.parseInt(mmddyy[1]));
-        result.setYear(100 + Integer.parseInt(mmddyy[2]));
+        result.setYear(100 + Integer.parseInt(mmddyy[2].substring(0, Math.min(mmddyy[2].length(), 2))));
         return result;
 
     }

@@ -13,9 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -79,17 +77,17 @@ public class CrawlService {
         start = System.currentTimeMillis();
         stockInfo.getStock().setNewsOptimismCoefficient(
                 algorithmService.getArticlesSentimentAnalysis(stockInfo.getArticles(), false) * 10);
+//        stockInfo.setArticles(stockUtils.sortBySentimentAnalysis(stockInfo.getArticles()));
         elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
         System.out.println("Time elapsed getting sentiment analysis results(array): " + elapsedTimeSec + "s.");
 
         stockInfo.getStock().setPredictedChange(
-                ((stockInfo.getStock().getExpertsRecommendationCoefficient()+5)/10.0
-                +
-                        stockInfo.getStock().getHistoryOptimismCoefficient()/100.0
-                +
+                ((stockInfo.getStock().getExpertsRecommendationCoefficient())
+                        +
+                        stockInfo.getStock().getHistoryOptimismCoefficient()
+                        +
                         stockInfo.getStock().getNewsOptimismCoefficient()
-                )/3.0*10
-
+                ) / 3.0 - 5
         );
         if (saveInDatabase) {
             start = System.currentTimeMillis();
@@ -101,6 +99,8 @@ public class CrawlService {
         System.out.println("--------------------------------------");
         return stockInfo;
     }
+
+
 
     public StockInformation crawlMarketWatch(String stock, boolean saveInDatabase) {
         StockInformation stockInfo = marketwatchCrawler.crawlStockInfo(stockUtils.searchStockByCompany(stock));

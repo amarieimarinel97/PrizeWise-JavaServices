@@ -11,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Service
 @Slf4j
@@ -28,7 +29,17 @@ public class AlgorithmService {
         else
             throw new ObjectNotFoundException("Stock evolution information not found.");
 
-        return result.getBody().getChanges()[1]*10+5; //TODO: HERE TO CHANGE HOC
+        return handleHOC(result.getBody().getChanges());
+    }
+
+    private Double handleHOC(Double[] changes) {
+        Double sum = 0.0;
+        for (Double d : changes) sum += d;
+        Double result = sum / changes.length - 1;
+        result = result / 2 + 5; //scale in [0,10]
+        result = result > 10 ? 10 : result;
+        result = result < 0 ? 0 : result;
+        return result;
     }
 
     public double[] getSentimentAnalysis(String[] text) {
@@ -76,9 +87,9 @@ public class AlgorithmService {
             double[] sentimentAnalysisResult = this.getSentimentAnalysis(textToSendToAnalysis.toArray(new String[0]));
             for (int i = 0; i < sentimentAnalysisResult.length; ++i)
                 articleList.get(i).setSentimentAnalysis(sentimentAnalysisResult[i]);
-            return getAverage(sentimentAnalysisResult);
-        }
+        return getAverage(sentimentAnalysisResult);
     }
+}
 
 
 }

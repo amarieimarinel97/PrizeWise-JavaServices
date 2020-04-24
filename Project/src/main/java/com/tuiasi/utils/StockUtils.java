@@ -1,6 +1,7 @@
 package com.tuiasi.utils;
 
 import com.tuiasi.exception.ObjectNotFoundException;
+import com.tuiasi.model.Article;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -8,6 +9,8 @@ import org.springframework.web.client.RestTemplate;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Component
 @Slf4j
@@ -32,6 +35,16 @@ public class StockUtils {
             throw new ObjectNotFoundException("Stock symbol not found.");
 
         return new String[]{symbol, companyName};
+    }
+
+    public Set<Article> sortBySentimentAnalysis(Set<Article> articles) {
+        Set<Article> sortedArticles = new TreeSet<>((art1, art2) -> {
+            if (art1 == null || art2 == null || art1.getSentimentAnalysis() == null || art2.getSentimentAnalysis() == null)
+                return 0;
+            return art1.getSentimentAnalysis() < art2.getSentimentAnalysis() ? 1 : -1;
+        });
+        sortedArticles.addAll(articles);
+        return sortedArticles;
     }
 
 

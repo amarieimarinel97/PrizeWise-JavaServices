@@ -10,4 +10,5 @@ public class StockEvolution {
     private Double[] changes;
     private Double[] deviation;
     private Double[] history;
+    private String[] historyDays;
 }
