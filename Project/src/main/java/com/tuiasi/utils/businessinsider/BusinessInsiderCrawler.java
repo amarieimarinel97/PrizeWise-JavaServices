@@ -75,7 +75,7 @@ public class BusinessInsiderCrawler {
         String theirRating = document.select("div.rating-label").text();
         Double ERC2 = theirRating.isEmpty() ? ERC1 : 5 - 2.5 * (Double.parseDouble(theirRating) - 1);
 
-        return theirRating.isEmpty() ? ERC1 : (ERC1 + ERC2) / 2;
+        return theirRating.isEmpty() ? ERC1*2 : (ERC1 + ERC2);
     }
 
     private Date getDate(String dateStr) {

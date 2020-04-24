@@ -1,36 +1,34 @@
 package com.tuiasi.service;
 
-import com.tuiasi.configuration.ApplicationConfiguration;
-import com.tuiasi.model.Article;
-import com.tuiasi.model.SentimentAnalysisResult;
-import com.tuiasi.model.StockPredictionResult;
+import com.tuiasi.exception.ObjectNotFoundException;
+import com.tuiasi.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 @Service
 @Slf4j
 public class AlgorithmService {
-    @Autowired
-    private ApplicationConfiguration applicationConfiguration;
-
-    public double getPredictionBasedOnHistory(String stock, int days) {
+    public double getPredictionBasedOnHistory(StockInformation stockInfo, int days) {
         String uri = "http://127.0.0.1:8081/stock_regr";
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("symbol", stock);
+        jsonObject.put("symbol", stockInfo.getStock().getSymbol());
         jsonObject.put("days", days);
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<StockPredictionResult> result = restTemplate.postForEntity(uri, jsonObject, StockPredictionResult.class);
-        return result.getBody().getChanges()[1];
+        ResponseEntity<StockEvolution> result = restTemplate.postForEntity(uri, jsonObject, StockEvolution.class);
+        if (result.hasBody())
+            stockInfo.setStockEvolution(result.getBody());
+        else
+            throw new ObjectNotFoundException("Stock evolution information not found.");
+
+        return result.getBody().getChanges()[1]*10+5; //TODO: HERE TO CHANGE HOC
     }
 
     public double[] getSentimentAnalysis(String[] text) {
@@ -50,7 +48,6 @@ public class AlgorithmService {
         jsonObject.put("text", text);
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> result = restTemplate.postForEntity(uri, jsonObject, String.class);
-        System.out.println("Received: " + result.getBody());
         return 0;
     }
 

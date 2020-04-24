@@ -71,13 +71,14 @@ public class CrawlService {
         System.out.println("Time elapsed crawling stock and articles: " + elapsedTimeSec + "s.");
 
         start = System.currentTimeMillis();
-        stockInfo.getStock().setHistoryOptimismCoefficient(algorithmService.getPredictionBasedOnHistory(stockSymbolAndCompany[0], 3));
+        double historyOptimismCoefficient = algorithmService.getPredictionBasedOnHistory(stockInfo, 3);
+        stockInfo.getStock().setHistoryOptimismCoefficient(historyOptimismCoefficient);
         elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
         System.out.println("Time elapsed getting stock regression prediction: " + elapsedTimeSec + "s.");
 
         start = System.currentTimeMillis();
         stockInfo.getStock().setNewsOptimismCoefficient(
-                algorithmService.getArticlesSentimentAnalysis(stockInfo.getArticles(), false));
+                algorithmService.getArticlesSentimentAnalysis(stockInfo.getArticles(), false) * 10);
         elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
         System.out.println("Time elapsed getting sentiment analysis results(array): " + elapsedTimeSec + "s.");
 
