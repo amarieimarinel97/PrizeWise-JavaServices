@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class BusinessInsiderCrawler {
 
-    public StockInformation crawlStockInfo(String[] companyInfo) {
+    public void crawlStockInfo(StockInformation stockInformation, String[] companyInfo) {
         String symbol = companyInfo[0];
         String companyName = companyInfo[1];
 
@@ -43,10 +43,8 @@ public class BusinessInsiderCrawler {
 
         Set<Article> articles = crawlStockArticles(symbol, stock);
 
-        return StockInformation.builder()
-                .stock(stock)
-                .articles(articles)
-                .build();
+        stockInformation.setStock(stock);
+        stockInformation.setArticles(articles);
     }
 
     private double getPriceFromPage(Document doc) {

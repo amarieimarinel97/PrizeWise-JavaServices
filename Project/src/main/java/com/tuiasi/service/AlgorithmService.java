@@ -1,7 +1,10 @@
 package com.tuiasi.service;
 
 import com.tuiasi.exception.ObjectNotFoundException;
-import com.tuiasi.model.*;
+import com.tuiasi.model.Article;
+import com.tuiasi.model.SentimentAnalysisResult;
+import com.tuiasi.model.StockEvolution;
+import com.tuiasi.model.StockInformation;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.springframework.http.ResponseEntity;
@@ -11,12 +14,11 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 @Service
 @Slf4j
 public class AlgorithmService {
-    public double getPredictionBasedOnHistory(StockInformation stockInfo, int days) {
+    public void handlePredictionBasedOnHistory(StockInformation stockInfo, int days) {
         String uri = "http://127.0.0.1:8081/stock_regr";
 
         JSONObject jsonObject = new JSONObject();
@@ -28,8 +30,7 @@ public class AlgorithmService {
             stockInfo.setStockEvolution(result.getBody());
         else
             throw new ObjectNotFoundException("Stock evolution information not found.");
-
-        return handleHOC(result.getBody().getChanges());
+        stockInfo.getStock().setHistoryOptimismCoefficient(handleHOC(result.getBody().getChanges()));
     }
 
     private Double handleHOC(Double[] changes) {
@@ -72,24 +73,18 @@ public class AlgorithmService {
         return sum / input.length;
     }
 
-    public double getArticlesSentimentAnalysis(Set<Article> articleSet, boolean isSentAsString) {
-        List<Article> articleList = new ArrayList<>(articleSet);
-        if (isSentAsString) {
-            StringBuilder sb = new StringBuilder();
-            for (Article art : articleList)
-                sb.append(art.getTitle()).append("|");
-            return this.getSentimentAnalysis(sb.toString());
-        } else {
-            List<String> textToSendToAnalysis = new ArrayList<>();
-            for (Article art : articleList) {
-                textToSendToAnalysis.add(art.getTitle());
-            }
-            double[] sentimentAnalysisResult = this.getSentimentAnalysis(textToSendToAnalysis.toArray(new String[0]));
-            for (int i = 0; i < sentimentAnalysisResult.length; ++i)
-                articleList.get(i).setSentimentAnalysis(sentimentAnalysisResult[i]);
-        return getAverage(sentimentAnalysisResult);
+    public void getArticlesSentimentAnalysis(StockInformation stockInformation) {
+        List<Article> articleList = new ArrayList<>(stockInformation.getArticles());
+        List<String> textToSendToAnalysis = new ArrayList<>();
+        for (Article art : articleList) {
+            textToSendToAnalysis.add(art.getTitle());
+        }
+        double[] sentimentAnalysisResult = this.getSentimentAnalysis(textToSendToAnalysis.toArray(new String[0]));
+        for (int i = 0; i < sentimentAnalysisResult.length; ++i)
+            articleList.get(i).setSentimentAnalysis(sentimentAnalysisResult[i]);
+
+        stockInformation.getStock().setNewsOptimismCoefficient(getAverage(sentimentAnalysisResult) * 10);
     }
 }
 
 
-}

@@ -1,9 +1,12 @@
 package com.tuiasi.service;
 
 
+import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.model.Article;
 import com.tuiasi.model.Site;
+import com.tuiasi.model.Stock;
 import com.tuiasi.model.StockInformation;
+import com.tuiasi.threading.threads.MainThread;
 import com.tuiasi.utils.marketwatch.MarketwatchCrawler;
 import com.tuiasi.utils.reddit.RedditCrawler;
 import com.tuiasi.utils.businessinsider.BusinessInsiderCrawler;
@@ -55,51 +58,28 @@ public class CrawlService {
     }
 
     public StockInformation crawlBusinessInsider(String stock, boolean saveInDatabase) {
-        long start;
-        float elapsedTimeSec;
-
-        start = System.currentTimeMillis();
         String[] stockSymbolAndCompany = stockUtils.searchStockByCompany(stock);
-        elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
-        System.out.println("Time elapsed getting symbol: " + elapsedTimeSec + "s.");
-
-        start = System.currentTimeMillis();
-        StockInformation stockInfo = businessInsiderCrawler.crawlStockInfo(stockSymbolAndCompany);
-        elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
-        System.out.println("Time elapsed crawling stock and articles: " + elapsedTimeSec + "s.");
-
-        start = System.currentTimeMillis();
-        double historyOptimismCoefficient = algorithmService.getPredictionBasedOnHistory(stockInfo, 3);
-        stockInfo.getStock().setHistoryOptimismCoefficient(historyOptimismCoefficient);
-        elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
-        System.out.println("Time elapsed getting stock regression prediction: " + elapsedTimeSec + "s.");
-
-        start = System.currentTimeMillis();
-        stockInfo.getStock().setNewsOptimismCoefficient(
-                algorithmService.getArticlesSentimentAnalysis(stockInfo.getArticles(), false) * 10);
-//        stockInfo.setArticles(stockUtils.sortBySentimentAnalysis(stockInfo.getArticles()));
-        elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
-        System.out.println("Time elapsed getting sentiment analysis results(array): " + elapsedTimeSec + "s.");
-
-        stockInfo.getStock().setPredictedChange(
-                ((stockInfo.getStock().getExpertsRecommendationCoefficient())
-                        +
-                        stockInfo.getStock().getHistoryOptimismCoefficient()
-                        +
-                        stockInfo.getStock().getNewsOptimismCoefficient()
-                ) / 3.0 - 5
-        );
-        if (saveInDatabase) {
-            start = System.currentTimeMillis();
-            stockService.add(stockInfo.getStock());
-            stockInfo.getArticles().forEach(article -> articleService.add(article));
-            elapsedTimeSec = (System.currentTimeMillis() - start) / 1000F;
-            System.out.println("Time elapsed storing in db: " + elapsedTimeSec + "s.");
+        StockInformation stockInformation = StockInformation.builder()
+                .stock(Stock.builder()
+                        .symbol(stockSymbolAndCompany[0])
+                        .company(stockSymbolAndCompany[1])
+                        .build())
+                .build();
+        MainThread mainThread = new MainThread(stockInformation, algorithmService, articleService, stockService, stockUtils);
+        try {
+            mainThread.run(saveInDatabase);
+        } catch (InterruptedException e) {
+            log.error("Could not process stock " + stock);
+            e.printStackTrace();
         }
-        System.out.println("--------------------------------------");
-        return stockInfo;
-    }
 
+        Double ERC = stockInformation.getStock().getExpertsRecommendationCoefficient();
+        Double HOC = stockInformation.getStock().getHistoryOptimismCoefficient();
+        Double NOC = stockInformation.getStock().getNewsOptimismCoefficient();
+        double predictedChange = (ERC + HOC + NOC) / 3.0 - 5;
+        stockInformation.getStock().setPredictedChange(predictedChange);
+        return stockInformation;
+    }
 
 
     public StockInformation crawlMarketWatch(String stock, boolean saveInDatabase) {
