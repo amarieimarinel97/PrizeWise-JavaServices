@@ -66,6 +66,7 @@ public class CrawlService {
                         .build())
                 .build();
         MainThread mainThread = new MainThread(stockInformation, algorithmService, articleService, stockService, stockUtils);
+
         try {
             mainThread.run(saveInDatabase);
         } catch (InterruptedException e) {
