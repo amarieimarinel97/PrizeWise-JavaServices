@@ -43,11 +43,11 @@ public class CrawlController {
         return this.crawlService.crawlMarketWatch(stock, saveInDatabase.orElse(false));
     }
 
-    @GetMapping("/yf")
-    public StockInformation crawlYahooFinance(@RequestParam(name="stock")String stock,
-                                             @RequestParam(name="save")Optional<Boolean> saveInDatabase){
-        return this.crawlService.crawlYahooFinance(stock, saveInDatabase.orElse(false));
-    }
+//    @GetMapping("/yf")
+//    public StockInformation crawlYahooFinance(@RequestParam(name="stock")String stock,
+//                                             @RequestParam(name="save")Optional<Boolean> saveInDatabase){
+//        return this.crawlService.crawlYahooFinance(stock, saveInDatabase.orElse(false));
+//    }
 
 
 
