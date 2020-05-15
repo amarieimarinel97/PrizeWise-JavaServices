@@ -5,7 +5,7 @@
 FROM maven:3.6.3-jdk-11
 EXPOSE 8080
 COPY . /project
-WORKDIR /target
+WORKDIR /project
 CMD java -jar target/crawler-1.0-SNAPSHOT.jar
 
 #docker build -t java:tag .
