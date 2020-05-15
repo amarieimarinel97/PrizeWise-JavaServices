@@ -5,21 +5,26 @@ import com.tuiasi.model.Article;
 import com.tuiasi.model.SentimentAnalysisResult;
 import com.tuiasi.model.StockEvolution;
 import com.tuiasi.model.StockInformation;
+import com.tuiasi.utils.AlgorithmServerAddress;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @Slf4j
 public class AlgorithmService {
+
+    @Autowired
+    AlgorithmServerAddress algorithmServerAddress;
+
     public void handlePredictionBasedOnHistory(StockInformation stockInfo, int days) {
-        String uri = "http://127.0.0.1:8081/stock_regr";
+        String uri = algorithmServerAddress.pythonAlgorithmServerAddress + "/stock_regr";
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("symbol", stockInfo.getStock().getSymbol());
@@ -44,7 +49,7 @@ public class AlgorithmService {
     }
 
     public double[] getSentimentAnalysis(String[] text) {
-        String uri = "http://127.0.0.1:8081/sent_analysis";
+        String uri = algorithmServerAddress.pythonAlgorithmServerAddress + "/sent_analysis";
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("text", text);
@@ -54,7 +59,7 @@ public class AlgorithmService {
     }
 
     public double getSentimentAnalysis(String text) {
-        String uri = "http://127.0.0.1:8081/sent_analysis";
+        String uri = algorithmServerAddress.pythonAlgorithmServerAddress + "/sent_analysis";
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("text", text);

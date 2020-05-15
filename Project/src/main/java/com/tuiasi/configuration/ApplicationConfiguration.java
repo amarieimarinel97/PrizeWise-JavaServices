@@ -1,5 +1,6 @@
 package com.tuiasi.configuration;
 
+import com.tuiasi.utils.AlgorithmServerAddress;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +17,7 @@ import javax.persistence.EntityManagerFactory;
 @PropertySource("classpath:application.properties")
 public class ApplicationConfiguration {
 
-    @Value("python.algorithm.server")
+    @Value("${python.algorithm.server}")
     public String pythonAlgorithmServerAddress;
 
     @Value("${spring.datasource.driver}")
@@ -53,6 +54,11 @@ public class ApplicationConfiguration {
         factory.setDataSource(getSpringDataSource());
         factory.afterPropertiesSet();
         return factory.getObject();
+    }
+
+    @Bean
+    public AlgorithmServerAddress algorithmServerAddress(){
+        return AlgorithmServerAddress.builder().pythonAlgorithmServerAddress(this.pythonAlgorithmServerAddress).build();
     }
 
     @Bean
