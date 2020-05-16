@@ -1,5 +1,4 @@
 #mvn clean package spring-boot:repackage
-
 #E:\\Tools\\JDKs\\jdk-11.0.4\\bin\\java -jar target/crawler-1.0-SNAPSHOT.jar
 
 FROM maven:3.6.3-jdk-11
