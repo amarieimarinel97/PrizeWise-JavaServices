@@ -16,6 +16,7 @@ C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\t
 C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\threading\threads\ArticlesRetrieveWorker.java
 C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\model\Site.java
 C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\threading\NotifyingThread.java
+C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\utils\AlgorithmServerAddress.java
 C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\model\StockInformation.java
 C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\repository\ICrudRepository.java
 C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\repository\ArticleRepository.java
@@ -32,5 +33,6 @@ C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\t
 C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\model\Article.java
 C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\controller\ICrudController.java
 C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\configuration\ApplicationConfiguration.java
+C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\utils\CORSFilter.java
 C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\threading\threads\StockRegressionWorker.java
 C:\Users\Marinel\Desktop\School\Licenta\JavaServices\Project\src\main\java\com\tuiasi\utils\reddit\RedditCrawler.java
