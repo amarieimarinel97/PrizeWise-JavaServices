@@ -14,4 +14,3 @@ CMD java -jar target/crawler-1.0-SNAPSHOT.jar
 
 #docker build -t java:tag .
 #docker run -it --network diploma-proj-net -p 8080:8080 --name diploma-proj-java --rm java:tag
-
