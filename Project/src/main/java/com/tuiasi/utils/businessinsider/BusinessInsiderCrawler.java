@@ -2,7 +2,7 @@ package com.tuiasi.utils.businessinsider;
 
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.model.Article;
-import com.tuiasi.model.Recommendation;
+import com.tuiasi.model.utils.Recommendation;
 import com.tuiasi.model.Stock;
 import com.tuiasi.model.StockInformation;
 import lombok.extern.slf4j.Slf4j;

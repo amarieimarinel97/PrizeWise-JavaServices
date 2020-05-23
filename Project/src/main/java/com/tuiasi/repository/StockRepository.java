@@ -60,7 +60,8 @@ public class StockRepository {
             return Optional.of(result);
         } catch (Exception e) {
             entityTransaction.rollback();
-            throw new ObjectNotFoundException("Stock with symbol: " + symbol + " could not be found.");
+            log.warn("Stock with symbol: " + symbol + " could not be found.");
+            return Optional.empty();
         }
     }
 

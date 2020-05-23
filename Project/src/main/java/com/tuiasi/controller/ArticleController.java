@@ -10,7 +10,7 @@ import java.util.List;
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/api/articles")
-public class ArticleController implements ICrudController<Article> {
+public class ArticleController implements ICrudController<Article, Integer> {
 
     private ArticleService service;
 
@@ -27,19 +27,19 @@ public class ArticleController implements ICrudController<Article> {
 
     @DeleteMapping("/{id}")
     @Override
-    public void delete(@PathVariable int id) {
+    public void delete(@PathVariable Integer id) {
         service.delete(id);
     }
 
     @PutMapping("/{id}")
     @Override
-    public Article update(@RequestBody Article article, @PathVariable int id) {
+    public Article update(@RequestBody Article article, @PathVariable Integer id) {
         return service.update(article, id);
     }
 
     @GetMapping("/{id}")
     @Override
-    public Article get(@PathVariable int id) {
+    public Article get(@PathVariable Integer id) {
         return service.get(id);
     }
 

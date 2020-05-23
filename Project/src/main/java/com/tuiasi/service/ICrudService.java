@@ -1,13 +1,11 @@
 package com.tuiasi.service;
 
-import org.springframework.stereotype.Service;
-
-public interface ICrudService<T> {
+public interface ICrudService<T, I> {
     T add(T object);
 
-    T get(int id);
+    T get(I id);
 
-    T update(T object, int id);
+    T update(T object, I id);
 
-    void delete(int id);
+    void delete(I id);
 }

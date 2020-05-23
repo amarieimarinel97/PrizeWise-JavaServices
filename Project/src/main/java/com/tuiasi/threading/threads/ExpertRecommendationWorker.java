@@ -1,7 +1,7 @@
 package com.tuiasi.threading.threads;
 
 import com.tuiasi.exception.ObjectNotFoundException;
-import com.tuiasi.model.Recommendation;
+import com.tuiasi.model.utils.Recommendation;
 import com.tuiasi.model.Stock;
 import com.tuiasi.threading.NotifyingThread;
 import org.jsoup.Jsoup;

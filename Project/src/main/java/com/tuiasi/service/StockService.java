@@ -73,6 +73,4 @@ public class StockService {
             throw new DatabaseConnectionException(e);
         }
     }
-
-
 }

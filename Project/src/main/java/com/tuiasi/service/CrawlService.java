@@ -1,20 +1,18 @@
 package com.tuiasi.service;
 
 
-import com.tuiasi.exception.ObjectNotFoundException;
-import com.tuiasi.model.Article;
-import com.tuiasi.model.Site;
-import com.tuiasi.model.Stock;
-import com.tuiasi.model.StockInformation;
+import com.tuiasi.model.*;
+import com.tuiasi.repository.StockRepository;
+import com.tuiasi.repository.StockSymbolRepository;
 import com.tuiasi.threading.threads.MainThread;
+import com.tuiasi.utils.StockUtils;
+import com.tuiasi.utils.businessinsider.BusinessInsiderCrawler;
 import com.tuiasi.utils.marketwatch.MarketwatchCrawler;
 import com.tuiasi.utils.reddit.RedditCrawler;
-import com.tuiasi.utils.businessinsider.BusinessInsiderCrawler;
-import com.tuiasi.utils.StockUtils;
-//import com.tuiasi.utils.yahoofinance.YahooFinanceCrawler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.*;
 
@@ -29,10 +27,12 @@ public class CrawlService {
     private StockService stockService;
     private StockUtils stockUtils;
     private MarketwatchCrawler marketwatchCrawler;
-//    private YahooFinanceCrawler yahooFinanceCrawler;
+    private StockEvolutionService stockEvolutionService;
+    private StockRepository stockRepository;
+    private StockSymbolRepository stockSymbolRepository;
 
     @Autowired
-    public CrawlService(AlgorithmService algorithmService, RedditCrawler redditCrawler, ArticleService articleService, BusinessInsiderCrawler businessInsiderCrawler, StockService stockService, StockUtils stockUtils, MarketwatchCrawler marketwatchCrawler//, YahooFinanceCrawler yahooFinanceCrawler
+    public CrawlService(StockSymbolRepository stockSymbolRepository, StockRepository stockRepository, AlgorithmService algorithmService, RedditCrawler redditCrawler, ArticleService articleService, BusinessInsiderCrawler businessInsiderCrawler, StockService stockService, StockUtils stockUtils, MarketwatchCrawler marketwatchCrawler, StockEvolutionService stockEvolutionService
     ) {
         this.algorithmService = algorithmService;
         this.redditCrawler = redditCrawler;
@@ -41,7 +41,9 @@ public class CrawlService {
         this.stockService = stockService;
         this.stockUtils = stockUtils;
         this.marketwatchCrawler = marketwatchCrawler;
-//        this.yahooFinanceCrawler = yahooFinanceCrawler;
+        this.stockEvolutionService = stockEvolutionService;
+        this.stockRepository = stockRepository;
+        this.stockSymbolRepository = stockSymbolRepository;
     }
 
     public List<Article> crawlSubreddit(String subreddit, boolean saveInDatabase, int noOfPages) {
@@ -66,7 +68,7 @@ public class CrawlService {
                         .company(stockSymbolAndCompany[1])
                         .build())
                 .build();
-        MainThread mainThread = new MainThread(stockInformation, algorithmService, articleService, stockService, stockUtils);
+        MainThread mainThread = new MainThread(stockInformation, algorithmService, articleService, stockService, stockUtils, stockEvolutionService, stockRepository);
 
         try {
             mainThread.run(saveInDatabase);
@@ -74,12 +76,6 @@ public class CrawlService {
             log.error("Could not process stock " + stock);
             e.printStackTrace();
         }
-
-        Double ERC = stockInformation.getStock().getExpertsRecommendationCoefficient();
-        Double HOC = stockInformation.getStock().getHistoryOptimismCoefficient();
-        Double NOC = stockInformation.getStock().getNewsOptimismCoefficient();
-        double predictedChange = (ERC + HOC + NOC) / 3.0 - 5;
-        stockInformation.getStock().setPredictedChange(predictedChange);
         return stockInformation;
     }
 
@@ -93,12 +89,39 @@ public class CrawlService {
         return stockInfo;
     }
 
-//    public StockInformation crawlYahooFinance(String stock, boolean saveInDatabase) {
-//        StockInformation stockInfo = yahooFinanceCrawler.crawlStockInfo(stockUtils.searchStockByCompany(stock));
-//        if (saveInDatabase) {
-//            stockService.add(stockInfo.getStock());
-//            stockInfo.getArticles().forEach(article -> articleService.add(article));
-//        }
-//        return stockInfo;
-//    }
+    public List<StockInformation> getTopGrowingStocks(int noOfStocks, boolean isDescendingOrder) {
+        Map<Double, StockInformation> map = isDescendingOrder? new TreeMap<>(Collections.reverseOrder()): new TreeMap<>();
+
+        for (Stock stock : stockService.getAll()) {
+            map.put(
+                    stock.getPredictedChange(),
+                    StockInformation.builder()
+                            .stock(stock)
+                            .articles(articleService.getLastArticlesBySymbol(stock.getSymbol(), 25))
+                            .stockEvolution(stockEvolutionService.get(stock.getSymbol()))
+                            .build()
+            );
+        }
+
+        return new ArrayList<>(map.values()).subList(0, noOfStocks);
+    }
+
+
+    public List<StockInformation> getTopPopularStocks(int noOfStocks) {
+        Map<Integer, StockInformation> map = new TreeMap<>(Collections.reverseOrder());
+
+        for (Stock stock : stockService.getAll()) {
+            map.put(
+                    stock.getHits(),
+                    StockInformation.builder()
+                            .stock(stock)
+                            .articles(articleService.getLastArticlesBySymbol(stock.getSymbol(), 25))
+                            .stockEvolution(stockEvolutionService.get(stock.getSymbol()))
+                            .build()
+            );
+        }
+
+        return new ArrayList<>(map.values()).subList(0, noOfStocks);
+    }
+
 }

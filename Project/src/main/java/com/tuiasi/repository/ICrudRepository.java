@@ -2,12 +2,12 @@ package com.tuiasi.repository;
 
 import java.util.Optional;
 
-public interface ICrudRepository<T> {
+public interface ICrudRepository<T, I> {
     T add(T object);
 
-    Optional<T> get(int id);
+    Optional<T> get(I id);
 
-    Optional<T> update(T object, int id);
+    Optional<T> update(T object, I id);
 
-    void delete(int id);
+    void delete(I id);
 }

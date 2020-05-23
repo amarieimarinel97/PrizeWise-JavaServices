@@ -2,6 +2,7 @@ package com.tuiasi.repository;
 
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.model.Article;
+import com.tuiasi.model.Stock;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -10,12 +11,11 @@ import javax.persistence.*;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Repository
-public class ArticleRepository implements ICrudRepository<Article> {
+public class ArticleRepository implements ICrudRepository<Article, Integer> {
 
     private EntityManager entityManager;
 
@@ -57,7 +57,7 @@ public class ArticleRepository implements ICrudRepository<Article> {
         return article;
     }
 
-    public Optional<Article> get(int id) {
+    public Optional<Article> get(Integer id) {
         EntityTransaction entityTransaction = entityManager.getTransaction();
         try {
             entityTransaction.begin();
@@ -71,7 +71,7 @@ public class ArticleRepository implements ICrudRepository<Article> {
         }
     }
 
-    public Optional<Article> update(Article article, int id) {
+    public Optional<Article> update(Article article, Integer id) {
         EntityTransaction entityTransaction = entityManager.getTransaction();
         try {
             entityTransaction.begin();
@@ -88,7 +88,7 @@ public class ArticleRepository implements ICrudRepository<Article> {
     }
 
 
-    public void delete(int id) throws ObjectNotFoundException {
+    public void delete(Integer id) throws ObjectNotFoundException {
         EntityTransaction entityTransaction = entityManager.getTransaction();
         try {
             Article result = get(id).orElseThrow(ObjectNotFoundException::new);
@@ -110,4 +110,12 @@ public class ArticleRepository implements ICrudRepository<Article> {
         TypedQuery<Article> allQuery = entityManager.createQuery(all);
         return allQuery.getResultList();
     }
+
+    public Set<Article> getLastArticlesBySymbol(String symbol, int numberOfArticles){
+        Query query = entityManager.createQuery(SQL_SELECT_WHERE);
+        query.setParameter("symbol", symbol);
+        return new HashSet<>(query.setMaxResults(numberOfArticles).getResultList());
+    }
+
+    private final String SQL_SELECT_WHERE = "SELECT a FROM Article a JOIN FETCH a.stock WHERE a.stock.symbol = :symbol ORDER BY a.lastUpdated";
 }

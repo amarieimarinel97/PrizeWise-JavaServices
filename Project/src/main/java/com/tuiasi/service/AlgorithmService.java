@@ -2,7 +2,7 @@ package com.tuiasi.service;
 
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.model.Article;
-import com.tuiasi.model.SentimentAnalysisResult;
+import com.tuiasi.model.utils.SentimentAnalysisResult;
 import com.tuiasi.model.StockEvolution;
 import com.tuiasi.model.StockInformation;
 import com.tuiasi.utils.AlgorithmServerAddress;
@@ -31,8 +31,9 @@ public class AlgorithmService {
         jsonObject.put("days", days);
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<StockEvolution> result = restTemplate.postForEntity(uri, jsonObject, StockEvolution.class);
-        if (result.hasBody())
+        if (result.hasBody()) {
             stockInfo.setStockEvolution(result.getBody());
+        }
         else
             throw new ObjectNotFoundException("Stock evolution information not found.");
         stockInfo.getStock().setHistoryOptimismCoefficient(handleHOC(result.getBody().getChanges()));

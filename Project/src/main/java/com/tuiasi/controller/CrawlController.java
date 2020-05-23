@@ -43,12 +43,21 @@ public class CrawlController {
         return this.crawlService.crawlMarketWatch(stock, saveInDatabase.orElse(false));
     }
 
-//    @GetMapping("/yf")
-//    public StockInformation crawlYahooFinance(@RequestParam(name="stock")String stock,
-//                                             @RequestParam(name="save")Optional<Boolean> saveInDatabase){
-//        return this.crawlService.crawlYahooFinance(stock, saveInDatabase.orElse(false));
-//    }
+    @GetMapping("/growing")
+    public List<StockInformation> getTopGrowingStocks(@RequestParam(name="number")Optional<Integer> numberOfStocks){
+        return crawlService.getTopGrowingStocks(numberOfStocks.orElse(DEFAULT_NO_OF_STOCKS), true);
+    }
 
+    @GetMapping("/decreasing")
+    public List<StockInformation> getTopDecreasingStocks(@RequestParam(name="number")Optional<Integer> numberOfStocks){
+        return crawlService.getTopGrowingStocks(numberOfStocks.orElse(DEFAULT_NO_OF_STOCKS), false);
+    }
 
+    @GetMapping("/popular")
+    public List<StockInformation> getTopPopularStocks(@RequestParam(name="number")Optional<Integer> numberOfStocks){
+        return crawlService.getTopPopularStocks(numberOfStocks.orElse(DEFAULT_NO_OF_STOCKS));
+    }
+
+    private final Integer DEFAULT_NO_OF_STOCKS = 5;
 
 }

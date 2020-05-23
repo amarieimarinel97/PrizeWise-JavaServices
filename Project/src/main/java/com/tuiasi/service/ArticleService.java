@@ -11,16 +11,17 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Slf4j
-public class ArticleService implements ICrudService<Article> {
+public class ArticleService implements ICrudService<Article, Integer> {
 
     private ArticleRepository repository;
 
     @Autowired
-    public ArticleService(ICrudRepository<Article> articleRepository) {
-        this.repository= (ArticleRepository) articleRepository;
+    public ArticleService(ICrudRepository<Article, Integer> articleRepository) {
+        this.repository = (ArticleRepository) articleRepository;
     }
 
     @Override
@@ -34,7 +35,7 @@ public class ArticleService implements ICrudService<Article> {
     }
 
     @Override
-    public Article get(int id) throws ObjectNotFoundException {
+    public Article get(Integer id) throws ObjectNotFoundException {
         try {
             Optional<Article> article = repository.get(id);
             return article
@@ -47,7 +48,7 @@ public class ArticleService implements ICrudService<Article> {
     }
 
     @Override
-    public Article update(Article article, int id) throws ObjectNotFoundException {
+    public Article update(Article article, Integer id) throws ObjectNotFoundException {
         try {
             Optional<Article> result = repository.update(article, id);
             return result
@@ -59,7 +60,7 @@ public class ArticleService implements ICrudService<Article> {
     }
 
     @Override
-    public void delete(int id) {
+    public void delete(Integer id) {
         try {
             repository.delete(id);
         } catch (ObjectNotFoundException e) {
@@ -75,6 +76,15 @@ public class ArticleService implements ICrudService<Article> {
             return repository.getAll();
         } catch (Exception e) {
             log.error("Could not retrieve all articles: " + e.getMessage());
+            throw new DatabaseConnectionException(e);
+        }
+    }
+
+    public Set<Article> getLastArticlesBySymbol(String symbol, int numberOfArticles) {
+        try {
+            return repository.getLastArticlesBySymbol(symbol, numberOfArticles);
+        } catch (Exception e) {
+            log.error("Could not retrieve articles: " + e.getMessage());
             throw new DatabaseConnectionException(e);
         }
     }

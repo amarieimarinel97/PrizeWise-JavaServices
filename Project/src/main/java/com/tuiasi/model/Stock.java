@@ -2,8 +2,7 @@ package com.tuiasi.model;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -11,10 +10,12 @@ import java.util.Set;
 
 @Builder
 @Entity
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
 @Table(name = "stocks")
 public class Stock {
-
+    public Stock() {}
     @Id
     @Column(unique = true)
     private String symbol;
@@ -23,7 +24,6 @@ public class Stock {
     private String company;
 
     @Column(name = "last_updated")
-    @Temporal(TemporalType.DATE)
     private Date lastUpdated;
 
     @Column(name = "NOC")
@@ -40,6 +40,9 @@ public class Stock {
 
     @Column
     private Double price;
+
+    @Column
+    private Integer hits;
 
     @Transient
     @JsonIgnore
