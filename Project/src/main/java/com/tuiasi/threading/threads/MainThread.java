@@ -55,7 +55,7 @@ public class MainThread implements ThreadListener {
             workers.add(new ExpertRecommendationWorker(this.stockInformation.getStock()));
             workers.add(new StockRegressionWorker(this.algorithmService, this.stockInformation));
             workers.add(new ArticlesRetrieveWorker(this.algorithmService, this.stockInformation));
-            this.stockInformation.getStock().setHits(preexistingStock.isPresent() ? preexistingStock.get().getHits() + 1 : 1);
+            this.stockInformation.getStock().setHits(preexistingStock.map(stock -> stock.getHits() + 1).orElse(1));
             this.noOfAliveThreads = workers.size();
 
             for (NotifyingThread worker : workers) {
