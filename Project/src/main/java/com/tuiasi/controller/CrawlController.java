@@ -59,5 +59,4 @@ public class CrawlController {
     }
 
     private final Integer DEFAULT_NO_OF_STOCKS = 5;
-
 }
