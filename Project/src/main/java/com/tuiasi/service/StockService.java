@@ -73,4 +73,13 @@ public class StockService {
             throw new DatabaseConnectionException(e);
         }
     }
+
+    public List<Stock> getStocksSortedBy(String criteria, Integer limit, boolean descendingOrder){
+        try {
+            return repository.getStocksSortedBy(criteria, limit, descendingOrder);
+        } catch (Exception e) {
+            log.error("Could not retrieve all stocks: " + e.getMessage());
+            throw new DatabaseConnectionException(e);
+        }
+    }
 }

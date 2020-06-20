@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -90,38 +91,19 @@ public class CrawlService {
     }
 
     public List<StockInformation> getTopGrowingStocks(int noOfStocks, boolean isDescendingOrder) {
-        Map<Double, StockInformation> map = isDescendingOrder? new TreeMap<>(Collections.reverseOrder()): new TreeMap<>();
-
-        for (Stock stock : stockService.getAll()) {
-            map.put(
-                    stock.getPredictedChange(),
-                    StockInformation.builder()
-                            .stock(stock)
-                            .articles(articleService.getLastArticlesBySymbol(stock.getSymbol(), 25))
-                            .stockEvolution(stockEvolutionService.get(stock.getSymbol()))
-                            .build()
-            );
-        }
-
-        return new ArrayList<>(map.values()).subList(0, noOfStocks);
+        return stockService.getStocksSortedBy("predictedChange", noOfStocks, isDescendingOrder)
+                .stream()
+                .map(stock -> StockInformation.builder().stock(stock).build())
+                .collect(Collectors.toList());
     }
 
 
+
     public List<StockInformation> getTopPopularStocks(int noOfStocks) {
-        Map<Integer, StockInformation> map = new TreeMap<>(Collections.reverseOrder());
-
-        for (Stock stock : stockService.getAll()) {
-            map.put(
-                    stock.getHits(),
-                    StockInformation.builder()
-                            .stock(stock)
-                            .articles(articleService.getLastArticlesBySymbol(stock.getSymbol(), 25))
-                            .stockEvolution(stockEvolutionService.get(stock.getSymbol()))
-                            .build()
-            );
-        }
-
-        return new ArrayList<>(map.values()).subList(0, noOfStocks);
+        return stockService.getStocksSortedBy("hits", noOfStocks, true)
+                .stream()
+                .map(stock -> StockInformation.builder().stock(stock).build())
+                .collect(Collectors.toList());
     }
 
 }

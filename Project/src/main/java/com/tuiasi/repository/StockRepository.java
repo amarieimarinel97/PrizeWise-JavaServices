@@ -1,6 +1,7 @@
 package com.tuiasi.repository;
 
 import com.tuiasi.exception.ObjectNotFoundException;
+import com.tuiasi.model.Article;
 import com.tuiasi.model.Stock;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +11,7 @@ import javax.persistence.*;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Repository
@@ -103,4 +103,14 @@ public class StockRepository {
         TypedQuery<Stock> allQuery = entityManager.createQuery(all);
         return allQuery.getResultList();
     }
+
+
+    public List<Stock> getStocksSortedBy(String criteria, Integer limit, boolean descendingOrder) {
+        String orderSql = descendingOrder ? " DESC" : " ASC";
+        Query query = entityManager.createQuery(SQL_SELECT_SORT + criteria + orderSql);
+        return new ArrayList<>(query.setMaxResults(limit > 0 ? limit : DEFAULT_STOCKS_NUMBER).getResultList());
+    }
+
+    private final String SQL_SELECT_SORT = "SELECT s FROM Stock s ORDER BY s.";
+    private final Integer DEFAULT_STOCKS_NUMBER = 5;
 }
