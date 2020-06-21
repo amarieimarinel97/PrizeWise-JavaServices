@@ -14,17 +14,14 @@ public class Recommendation {
     String text;
 
     public static final Comparator comparatorByDate =
-            new Comparator() {
-                @Override
-                public int compare(Object rec1, Object rec2) {
-                    if (!(rec1 instanceof Recommendation))
-                        return -1;
-                    if (!(rec2 instanceof Recommendation))
-                        return 1;
-                    if (((Recommendation) rec1).date.compareTo(((Recommendation) rec2).date) > 0)
-                        return 1;
+            (rec1, rec2) -> {
+                if (!(rec1 instanceof Recommendation))
                     return -1;
-                }
+                if (!(rec2 instanceof Recommendation))
+                    return 1;
+                if (((Recommendation) rec1).date.compareTo(((Recommendation) rec2).date) > 0)
+                    return 1;
+                return -1;
             };
 
     public static final String BUY = "BUY";

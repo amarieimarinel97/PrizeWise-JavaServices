@@ -2,6 +2,7 @@ package com.tuiasi.service;
 
 
 import com.tuiasi.model.*;
+import com.tuiasi.model.utils.StockInformationWithTimestamp;
 import com.tuiasi.repository.StockRepository;
 import com.tuiasi.repository.StockSymbolRepository;
 import com.tuiasi.threading.threads.MainThread;
@@ -12,8 +13,12 @@ import com.tuiasi.utils.reddit.RedditCrawler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,6 +50,7 @@ public class CrawlService {
         this.stockEvolutionService = stockEvolutionService;
         this.stockRepository = stockRepository;
         this.stockSymbolRepository = stockSymbolRepository;
+        this.dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     }
 
     public List<Article> crawlSubreddit(String subreddit, boolean saveInDatabase, int noOfPages) {
@@ -62,23 +68,9 @@ public class CrawlService {
     }
 
     public StockInformation crawlBusinessInsider(String stock, boolean saveInDatabase) {
-        String[] stockSymbolAndCompany = stockUtils.searchStockByCompany(stock);
-        StockInformation stockInformation = StockInformation.builder()
-                .stock(Stock.builder()
-                        .symbol(stockSymbolAndCompany[0])
-                        .company(stockSymbolAndCompany[1])
-                        .build())
-                .build();
-        MainThread mainThread = new MainThread(stockInformation, algorithmService, articleService, stockService, stockUtils, stockEvolutionService, stockRepository);
-
-        try {
-            mainThread.run(saveInDatabase);
-        } catch (InterruptedException e) {
-            log.error("Could not process stock " + stock);
-            e.printStackTrace();
-        }
-        return stockInformation;
+        return crawlBusinessInsiderWithCache(stock, saveInDatabase, Optional.empty());
     }
+
 
 
     public StockInformation crawlMarketWatch(String stock, boolean saveInDatabase) {
@@ -98,7 +90,6 @@ public class CrawlService {
     }
 
 
-
     public List<StockInformation> getTopPopularStocks(int noOfStocks) {
         return stockService.getStocksSortedBy("hits", noOfStocks, true)
                 .stream()
@@ -106,4 +97,51 @@ public class CrawlService {
                 .collect(Collectors.toList());
     }
 
+    public void handleCookieSetting(StockInformation stockInformation, HttpServletResponse response) {
+        String formattedDateTime = LocalDateTime.now().format(dateTimeFormatter);
+        Cookie cookie = new Cookie(stockInformation.getStock().getSymbol(), formattedDateTime);
+        cookie.setMaxAge(80000);
+        response.addCookie(cookie);
+    }
+
+    public List<StockInformationWithTimestamp> getHistoryOfStocks(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        List<StockInformationWithTimestamp> stockInformationWithTimestamps = new ArrayList<>();
+        if (!Objects.isNull(cookies))
+            Arrays.stream(cookies)
+                    .limit(5)
+                    .forEach(cookie ->
+                            stockInformationWithTimestamps.add(
+                                    StockInformationWithTimestamp.builder()
+                                            .stockInformation(this.crawlBusinessInsiderWithCache(cookie.getName(), false, Optional.of(ONE_DAY_IN_MILLIS)))
+                                            .localDateTime(LocalDateTime.parse(cookie.getValue(), this.dateTimeFormatter))
+                                            .build()
+                            )
+                    );
+        stockInformationWithTimestamps.sort(Comparator.comparing(StockInformationWithTimestamp::getLocalDateTime).reversed());
+        return stockInformationWithTimestamps;
+    }
+
+
+
+    private StockInformation crawlBusinessInsiderWithCache(String stock, boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) {
+        String[] stockSymbolAndCompany = stockUtils.searchStockByCompany(stock);
+        StockInformation stockInformation = StockInformation.builder()
+                .stock(Stock.builder()
+                        .symbol(stockSymbolAndCompany[0])
+                        .company(stockSymbolAndCompany[1])
+                        .build())
+                .build();
+        MainThread mainThread = new MainThread(stockInformation, algorithmService, articleService, stockService, stockUtils, stockEvolutionService, stockRepository);
+
+        try {
+            mainThread.run(saveInDatabase, cacheValidityTimeMillis);
+        } catch (InterruptedException e) {
+            log.error("Could not process stock " + stock);
+            e.printStackTrace();
+        }
+        return stockInformation;
+    }
+    private Long ONE_DAY_IN_MILLIS = (long)8.64e7;
+    private DateTimeFormatter dateTimeFormatter;
 }

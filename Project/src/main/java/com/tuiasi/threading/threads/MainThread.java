@@ -1,7 +1,6 @@
 package com.tuiasi.threading.threads;
 
 import com.tuiasi.model.Stock;
-import com.tuiasi.model.StockEvolution;
 import com.tuiasi.model.StockInformation;
 import com.tuiasi.repository.StockRepository;
 import com.tuiasi.service.AlgorithmService;
@@ -37,11 +36,11 @@ public class MainThread implements ThreadListener {
         this.stockRepository = stockRepository;
     }
 
-    public void run(boolean saveInDatabase) throws InterruptedException {
+    public void run(boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) throws InterruptedException {
         this.saveInDatabase = saveInDatabase;
         Optional<Stock> preexistingStock = stockRepository.get(this.stockInformation.getStock().getSymbol());
 
-        if (preexistingStock.isPresent() && isCacheValid(preexistingStock.get())) {
+        if (preexistingStock.isPresent() && isCacheValid(preexistingStock.get(), cacheValidityTimeMillis.orElse(DEFAULT_CACHE_VALIDITY_TIME_MILLIS))) {
             this.stockInformation.setStock(preexistingStock.get());
             this.stockInformation.setArticles(
                     articleService.getLastArticlesBySymbol(
@@ -88,11 +87,11 @@ public class MainThread implements ThreadListener {
         }
     }
 
-    private final long CACHE_VALIDITY_TIME_MILLIS = 3600000;
+    public final long DEFAULT_CACHE_VALIDITY_TIME_MILLIS = 3600000;
     private final int NO_OF_ARTICLES_TO_RETRIEVE = 25;
 
 
-    private boolean isCacheValid(Stock stock) {
-        return stock.getLastUpdated().getTime() >= new Date().getTime() - CACHE_VALIDITY_TIME_MILLIS;
+    private boolean isCacheValid(Stock stock, long cacheValidityMillis) {
+        return stock.getLastUpdated().getTime() >= new Date().getTime() - cacheValidityMillis;
     }
 }

@@ -2,14 +2,18 @@ package com.tuiasi.utils;
 
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.model.Article;
+import com.tuiasi.model.StockInformation;
 import com.tuiasi.model.StockSymbol;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Component
@@ -59,7 +63,7 @@ public class StockUtils {
     }
 
 
-    public static void writeToFile(String fileName, String str, boolean append) {
+    public void writeToFile(String fileName, String str, boolean append) {
         BufferedWriter writer = null;
         try {
             writer = new BufferedWriter(new FileWriter(fileName, append));
@@ -76,7 +80,7 @@ public class StockUtils {
     }
 
 
-    public static String convertXPathToJsoupSyntax(String xpath) {
+    public String convertXPathToJsoupSyntax(String xpath) {
         if (xpath.charAt(0) == '/')
             xpath = xpath.substring(1);
 
@@ -98,6 +102,8 @@ public class StockUtils {
         }
         return result.toString();
     }
+
+
 
 
 }
