@@ -8,10 +8,8 @@ import com.tuiasi.service.CrawlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +38,7 @@ public class CrawlController {
                                                  HttpServletResponse response) {
 
         StockInformation stockInformation = this.crawlService.crawlBusinessInsider(stock, saveInDatabase.orElse(false));
-        crawlService.handleCookieSetting(stockInformation, response);
+        crawlService.handleCookieSetting(stockInformation.getStock().getSymbol(), response, crawlService.HISTORY_COOKIE_PREFIX);
         return stockInformation;
     }
 
@@ -65,13 +63,27 @@ public class CrawlController {
         return crawlService.getTopPopularStocks(numberOfStocks.orElse(DEFAULT_NO_OF_STOCKS));
     }
 
-
     @GetMapping("/history")
     public List<StockInformationWithTimestamp> getHistoryOfStocks(HttpServletRequest request) {
-        return crawlService.getHistoryOfStocks(request);
+        return crawlService.getListOfStocksFromCookies(request, crawlService.HISTORY_COOKIE_PREFIX, DEFAULT_NO_OF_STOCKS);
+    }
+
+    @GetMapping("/watchlist")
+    public List<StockInformationWithTimestamp> getMyWatchlistOfStocks(HttpServletRequest request) {
+        return crawlService.getListOfStocksFromCookies(request, crawlService.WATCHLIST_COOKIE_PREFIX, DEFAULT_NO_OF_STOCKS);
+    }
+
+    @GetMapping("/watchlist/add")
+    public void addStockToWatchlist(@RequestParam(name = "stock")String stock, HttpServletResponse response) {
+        crawlService.handleCookieSetting(stock, response, crawlService.WATCHLIST_COOKIE_PREFIX );
+    }
+
+    @GetMapping("/watchlist/remove")
+    public boolean removeStockFromWatchlist(@RequestParam(name = "stock")String stock, HttpServletRequest request, HttpServletResponse response) {
+        return crawlService.removeStockFromWatchlist(stock, request, response);
     }
 
 
 
     private final Integer DEFAULT_NO_OF_STOCKS = 5;
-}
+  }

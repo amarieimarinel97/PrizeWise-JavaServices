@@ -13,10 +13,14 @@ import com.tuiasi.utils.reddit.RedditCrawler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -72,7 +76,6 @@ public class CrawlService {
     }
 
 
-
     public StockInformation crawlMarketWatch(String stock, boolean saveInDatabase) {
         StockInformation stockInfo = marketwatchCrawler.crawlStockInfo(stockUtils.searchStockByCompany(stock));
         if (saveInDatabase) {
@@ -97,31 +100,48 @@ public class CrawlService {
                 .collect(Collectors.toList());
     }
 
-    public void handleCookieSetting(StockInformation stockInformation, HttpServletResponse response) {
+    public void handleCookieSetting(String stock, HttpServletResponse response, String cookieValuePrefix) {
         String formattedDateTime = LocalDateTime.now().format(dateTimeFormatter);
-        Cookie cookie = new Cookie(stockInformation.getStock().getSymbol(), formattedDateTime);
+        Cookie cookie = new Cookie(cookieValuePrefix + stock, formattedDateTime);
         cookie.setMaxAge(80000);
+//        cookie.setDomain("127.0.0.1");
         response.addCookie(cookie);
     }
 
-    public List<StockInformationWithTimestamp> getHistoryOfStocks(HttpServletRequest request) {
+    public List<StockInformationWithTimestamp> getListOfStocksFromCookies(HttpServletRequest request,
+                                                                          String cookieValuePrefix, Integer limit) {
         Cookie[] cookies = request.getCookies();
         List<StockInformationWithTimestamp> stockInformationWithTimestamps = new ArrayList<>();
         if (!Objects.isNull(cookies))
             Arrays.stream(cookies)
-                    .limit(5)
-                    .forEach(cookie ->
-                            stockInformationWithTimestamps.add(
-                                    StockInformationWithTimestamp.builder()
-                                            .stockInformation(this.crawlBusinessInsiderWithCache(cookie.getName(), false, Optional.of(ONE_DAY_IN_MILLIS)))
-                                            .localDateTime(LocalDateTime.parse(cookie.getValue(), this.dateTimeFormatter))
-                                            .build()
-                            )
+                    .limit(limit)
+                    .forEach(cookie -> {
+                                if (cookie.getName().startsWith(cookieValuePrefix))
+                                    stockInformationWithTimestamps.add(
+                                            StockInformationWithTimestamp.builder()
+                                                    .stockInformation(this.crawlBusinessInsiderWithCache(cookie.getName().substring(cookieValuePrefix.length()), false, Optional.of(ONE_DAY_IN_MILLIS)))
+                                                    .localDateTime(LocalDateTime.parse(cookie.getValue(), this.dateTimeFormatter))
+                                                    .build()
+                                    );
+                            }
                     );
         stockInformationWithTimestamps.sort(Comparator.comparing(StockInformationWithTimestamp::getLocalDateTime).reversed());
         return stockInformationWithTimestamps;
     }
 
+    public boolean removeStockFromWatchlist(String stock, HttpServletRequest request, HttpServletResponse response) {
+        String cookieValue = WATCHLIST_COOKIE_PREFIX + stock;
+
+        boolean isCookieFound = false;
+        for (Cookie cookie : request.getCookies()) {
+            if (cookie.getName().equals(cookieValue)) {
+                isCookieFound = true;
+                cookie.setMaxAge(0);
+                response.addCookie(cookie);
+            }
+        }
+        return isCookieFound;
+    }
 
 
     private StockInformation crawlBusinessInsiderWithCache(String stock, boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) {
@@ -142,6 +162,10 @@ public class CrawlService {
         }
         return stockInformation;
     }
-    private Long ONE_DAY_IN_MILLIS = (long)8.64e7;
+
+    public Long ONE_DAY_IN_MILLIS = (long) 8.64e7;
     private DateTimeFormatter dateTimeFormatter;
+    public final String HISTORY_COOKIE_PREFIX = "HIST-";
+    public final String WATCHLIST_COOKIE_PREFIX = "WTLS-";
+
 }
