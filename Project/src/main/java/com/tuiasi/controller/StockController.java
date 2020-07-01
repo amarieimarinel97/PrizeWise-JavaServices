@@ -10,7 +10,7 @@ import java.util.List;
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/api/stocks")
-public class StockController {
+public class StockController implements ICrudController<Stock, String> {
 
     private StockService service;
 
@@ -31,7 +31,7 @@ public class StockController {
     }
 
     @PutMapping
-    public Stock update(@RequestBody Stock stock) {
+    public Stock update(@RequestBody Stock stock, String id) {
         return service.update(stock);
     }
 
