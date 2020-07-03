@@ -1,7 +1,7 @@
 package com.tuiasi.central_module.threading.threads;
 
 import com.tuiasi.crawler_module.model.Stock;
-import com.tuiasi.central_module.model.StockInformation;
+import com.tuiasi.central_module.model.StockAnalysis;
 import com.tuiasi.crawler_module.repository.StockRepository;
 import com.tuiasi.central_module.service.AlgorithmService;
 import com.tuiasi.crawler_module.service.ArticleService;
@@ -14,7 +14,7 @@ import com.tuiasi.utils.StockUtils;
 import java.util.*;
 
 public class MainThread implements ThreadListener {
-    private StockInformation stockInformation;
+    private StockAnalysis stockAnalysis;
     private AlgorithmService algorithmService;
     private StockUtils stockUtils;
     private ArticleService articleService;
@@ -25,8 +25,8 @@ public class MainThread implements ThreadListener {
     private int noOfAliveThreads;
 
 
-    public MainThread(StockInformation stockInformation, AlgorithmService algorithmService, ArticleService articleService, StockService stockService, StockUtils stockUtils, StockEvolutionService stockEvolutionService, StockRepository stockRepository) {
-        this.stockInformation = stockInformation;
+    public MainThread(StockAnalysis stockAnalysis, AlgorithmService algorithmService, ArticleService articleService, StockService stockService, StockUtils stockUtils, StockEvolutionService stockEvolutionService, StockRepository stockRepository) {
+        this.stockAnalysis = stockAnalysis;
         this.algorithmService = algorithmService;
         this.stockUtils = stockUtils;
         this.articleService = articleService;
@@ -38,23 +38,23 @@ public class MainThread implements ThreadListener {
 
     public void run(boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) throws InterruptedException {
         this.saveInDatabase = saveInDatabase;
-        Optional<Stock> preexistingStock = stockRepository.get(this.stockInformation.getStock().getSymbol());
+        Optional<Stock> preexistingStock = stockRepository.get(this.stockAnalysis.getStock().getSymbol());
 
         if (preexistingStock.isPresent() && isCacheValid(preexistingStock.get(), cacheValidityTimeMillis.orElse(DEFAULT_CACHE_VALIDITY_TIME_MILLIS))) {
-            this.stockInformation.setStock(preexistingStock.get());
-            this.stockInformation.setArticles(
+            this.stockAnalysis.setStock(preexistingStock.get());
+            this.stockAnalysis.setArticles(
                     articleService.getLastArticlesBySymbol(
-                            this.stockInformation.getStock().getSymbol(), NO_OF_ARTICLES_TO_RETRIEVE));
-            this.stockInformation.setStockEvolution(stockEvolutionService.get(this.stockInformation.getStock().getSymbol()));
-            this.stockInformation.getStock().setViews(this.stockInformation.getStock().getViews() + 1);
+                            this.stockAnalysis.getStock().getSymbol(), NO_OF_ARTICLES_TO_RETRIEVE));
+            this.stockAnalysis.setStockEvolution(stockEvolutionService.get(this.stockAnalysis.getStock().getSymbol()));
+            this.stockAnalysis.getStock().setViews(this.stockAnalysis.getStock().getViews() + 1);
             System.gc();
         } else {
             List<NotifyingThread> workers = new ArrayList<>();
-            workers.add(new StockInformationWorker(this.stockInformation.getStock()));
-            workers.add(new ExpertRecommendationWorker(this.stockInformation.getStock()));
-            workers.add(new StockRegressionWorker(this.algorithmService, this.stockInformation));
-            workers.add(new ArticlesRetrieveWorker(this.algorithmService, this.stockInformation));
-            this.stockInformation.getStock().setViews(preexistingStock.map(stock -> stock.getViews() + 1).orElse(1));
+            workers.add(new StockInformationWorker(this.stockAnalysis.getStock()));
+            workers.add(new ExpertRecommendationWorker(this.stockAnalysis.getStock()));
+            workers.add(new StockRegressionWorker(this.algorithmService, this.stockAnalysis));
+            workers.add(new ArticlesRetrieveWorker(this.algorithmService, this.stockAnalysis));
+            this.stockAnalysis.getStock().setViews(preexistingStock.map(stock -> stock.getViews() + 1).orElse(1));
             this.noOfAliveThreads = workers.size();
 
             for (NotifyingThread worker : workers) {
@@ -71,18 +71,18 @@ public class MainThread implements ThreadListener {
     @Override
     public void onThreadComplete(Thread thread) {
         if (--noOfAliveThreads == 0) {
-            Double ERC = this.stockInformation.getStock().getExpertsRecommendationCoefficient();
-            Double HOC = this.stockInformation.getStock().getHistoryOptimismCoefficient();
-            Double NOC = this.stockInformation.getStock().getNewsOptimismCoefficient();
+            Double ERC = this.stockAnalysis.getStock().getExpertsRecommendationCoefficient();
+            Double HOC = this.stockAnalysis.getStock().getHistoryOptimismCoefficient();
+            Double NOC = this.stockAnalysis.getStock().getNewsOptimismCoefficient();
             double predictedChange = (ERC + HOC + NOC) / 3.0 - 5;
-            this.stockInformation.getStock().setPredictedChange(predictedChange);
-            this.stockInformation.getStock().setArticles(this.stockInformation.getArticles());
-            this.stockInformation.getStockEvolution().setStockId(this.stockInformation.getStock().getSymbol());
+            this.stockAnalysis.getStock().setPredictedChange(predictedChange);
+            this.stockAnalysis.getStock().setArticles(this.stockAnalysis.getArticles());
+            this.stockAnalysis.getStockEvolution().setStockId(this.stockAnalysis.getStock().getSymbol());
 
             if (saveInDatabase) {
-                this.stockService.add(this.stockInformation.getStock());
-                this.stockInformation.getArticles().forEach(article -> articleService.add(article));
-                this.stockEvolutionService.add(stockInformation.getStockEvolution());
+                this.stockService.add(this.stockAnalysis.getStock());
+                this.stockAnalysis.getArticles().forEach(article -> articleService.add(article));
+                this.stockEvolutionService.add(stockAnalysis.getStockEvolution());
             }
         }
     }

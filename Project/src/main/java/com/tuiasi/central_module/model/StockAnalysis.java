@@ -9,7 +9,7 @@ import java.util.Set;
 
 @Data
 @Builder
-public class StockInformation {
+public class StockAnalysis {
     private Stock stock;
     private Set<Article> articles;
     private StockEvolution stockEvolution;

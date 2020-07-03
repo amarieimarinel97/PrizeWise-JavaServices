@@ -4,7 +4,7 @@ import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.crawler_module.model.Article;
 import com.tuiasi.central_module.model.utils.SentimentAnalysisResult;
 import com.tuiasi.central_module.model.StockEvolution;
-import com.tuiasi.central_module.model.StockInformation;
+import com.tuiasi.central_module.model.StockAnalysis;
 import com.tuiasi.utils.AlgorithmServerAddress;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -23,7 +23,7 @@ public class AlgorithmService {
     @Autowired
     AlgorithmServerAddress algorithmServerAddress;
 
-    public void handlePredictionBasedOnHistory(StockInformation stockInfo, int days) {
+    public void handlePredictionBasedOnHistory(StockAnalysis stockInfo, int days) {
         String uri = algorithmServerAddress.pythonAlgorithmServerAddress + CONTEXT_ANALYSIS_PATH;
 
         JSONObject jsonObject = new JSONObject();
@@ -69,8 +69,8 @@ public class AlgorithmService {
         return sum / input.length;
     }
 
-    public void getArticlesSentimentAnalysis(StockInformation stockInformation) {
-        List<Article> articleList = new ArrayList<>(stockInformation.getArticles());
+    public void getArticlesSentimentAnalysis(StockAnalysis stockAnalysis) {
+        List<Article> articleList = new ArrayList<>(stockAnalysis.getArticles());
         List<String> textToSendToAnalysis = new ArrayList<>();
         for (Article art : articleList) {
             textToSendToAnalysis.add(art.getTitle());
@@ -79,7 +79,7 @@ public class AlgorithmService {
         for (int i = 0; i < sentimentAnalysisResult.length; ++i)
             articleList.get(i).setSentimentAnalysis(sentimentAnalysisResult[i]);
 
-        stockInformation.getStock().setNewsOptimismCoefficient(getAverage(sentimentAnalysisResult) * 10);
+        stockAnalysis.getStock().setNewsOptimismCoefficient(getAverage(sentimentAnalysisResult) * 10);
     }
 
     private final String TEXTUAL_ANALYSIS_PATH = "/textual";

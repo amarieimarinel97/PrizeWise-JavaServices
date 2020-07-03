@@ -1,7 +1,7 @@
 package com.tuiasi.central_module.service;
 
 
-import com.tuiasi.central_module.model.StockInformation;
+import com.tuiasi.central_module.model.StockAnalysis;
 import com.tuiasi.crawler_module.model.*;
 import com.tuiasi.central_module.model.utils.StockInformationWithTimestamp;
 import com.tuiasi.crawler_module.repository.StockRepository;
@@ -46,22 +46,22 @@ public class MainService {
         this.dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     }
 
-    public StockInformation analyzeStock(String stock, boolean saveInDatabase) {
+    public StockAnalysis analyzeStock(String stock, boolean saveInDatabase) {
         return analyzeStockWithCache(stock, saveInDatabase, Optional.empty());
     }
 
-    public List<StockInformation> getTopGrowingStocks(int noOfStocks, boolean isDescendingOrder) {
+    public List<StockAnalysis> getTopGrowingStocks(int noOfStocks, boolean isDescendingOrder) {
         return stockService.getStocksSortedBy("predictedChange", noOfStocks, isDescendingOrder)
                 .stream()
-                .map(stock -> StockInformation.builder().stock(stock).build())
+                .map(stock -> StockAnalysis.builder().stock(stock).build())
                 .collect(Collectors.toList());
     }
 
 
-    public List<StockInformation> getTopPopularStocks(int noOfStocks) {
+    public List<StockAnalysis> getTopPopularStocks(int noOfStocks) {
         return stockService.getStocksSortedBy("hits", noOfStocks, true)
                 .stream()
-                .map(stock -> StockInformation.builder().stock(stock).build())
+                .map(stock -> StockAnalysis.builder().stock(stock).build())
                 .collect(Collectors.toList());
     }
 
@@ -84,7 +84,7 @@ public class MainService {
                                 if (cookie.getName().startsWith(cookieValuePrefix))
                                     stockInformationWithTimestamps.add(
                                             StockInformationWithTimestamp.builder()
-                                                    .stockInformation(this.analyzeStockWithCache(cookie.getName().substring(cookieValuePrefix.length()), false, Optional.of(ONE_DAY_IN_MILLIS)))
+                                                    .stockAnalysis(this.analyzeStockWithCache(cookie.getName().substring(cookieValuePrefix.length()), false, Optional.of(ONE_DAY_IN_MILLIS)))
                                                     .localDateTime(LocalDateTime.parse(cookie.getValue(), this.dateTimeFormatter))
                                                     .build()
                                     );
@@ -108,15 +108,15 @@ public class MainService {
         return isCookieFound;
     }
 
-    private StockInformation analyzeStockWithCache(String stock, boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) {
+    private StockAnalysis analyzeStockWithCache(String stock, boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) {
         String[] stockSymbolAndCompany = stockUtils.searchStockByCompany(stock);
-        StockInformation stockInformation = StockInformation.builder()
+        StockAnalysis stockAnalysis = StockAnalysis.builder()
                 .stock(Stock.builder()
                         .symbol(stockSymbolAndCompany[0])
                         .company(stockSymbolAndCompany[1])
                         .build())
                 .build();
-        MainThread mainThread = new MainThread(stockInformation, algorithmService, articleService, stockService, stockUtils, stockEvolutionService, stockRepository);
+        MainThread mainThread = new MainThread(stockAnalysis, algorithmService, articleService, stockService, stockUtils, stockEvolutionService, stockRepository);
 
         try {
             mainThread.run(saveInDatabase, cacheValidityTimeMillis);
@@ -124,7 +124,7 @@ public class MainService {
             log.error("Could not process stock " + stock);
             e.printStackTrace();
         }
-        return stockInformation;
+        return stockAnalysis;
     }
 
     public Long ONE_DAY_IN_MILLIS = (long) 8.64e7;

@@ -1,7 +1,7 @@
 package com.tuiasi.central_module.controller;
 
 
-import com.tuiasi.central_module.model.StockInformation;
+import com.tuiasi.central_module.model.StockAnalysis;
 import com.tuiasi.central_module.model.utils.StockInformationWithTimestamp;
 import com.tuiasi.central_module.service.MainService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,27 +24,27 @@ public class MainController {
     }
 
     @GetMapping("/analyze")
-    public StockInformation analyzeStock(@RequestParam(name = "stock") String stock,
-                                         @RequestParam(name = "save") Optional<Boolean> saveInDatabase,
-                                         HttpServletResponse response) {
+    public StockAnalysis analyzeStock(@RequestParam(name = "stock") String stock,
+                                      @RequestParam(name = "save") Optional<Boolean> saveInDatabase,
+                                      HttpServletResponse response) {
 
-        StockInformation stockInformation = this.mainService.analyzeStock(stock, saveInDatabase.orElse(false));
-        mainService.handleCookieSetting(stockInformation.getStock().getSymbol(), response, mainService.HISTORY_COOKIE_PREFIX);
-        return stockInformation;
+        StockAnalysis stockAnalysis = this.mainService.analyzeStock(stock, saveInDatabase.orElse(false));
+        mainService.handleCookieSetting(stockAnalysis.getStock().getSymbol(), response, mainService.HISTORY_COOKIE_PREFIX);
+        return stockAnalysis;
     }
 
     @GetMapping("/growing")
-    public List<StockInformation> getTopGrowingStocks(@RequestParam(name = "number") Optional<Integer> numberOfStocks) {
+    public List<StockAnalysis> getTopGrowingStocks(@RequestParam(name = "number") Optional<Integer> numberOfStocks) {
         return mainService.getTopGrowingStocks(numberOfStocks.orElse(DEFAULT_NO_OF_STOCKS), true);
     }
 
     @GetMapping("/decreasing")
-    public List<StockInformation> getTopDecreasingStocks(@RequestParam(name = "number") Optional<Integer> numberOfStocks) {
+    public List<StockAnalysis> getTopDecreasingStocks(@RequestParam(name = "number") Optional<Integer> numberOfStocks) {
         return mainService.getTopGrowingStocks(numberOfStocks.orElse(DEFAULT_NO_OF_STOCKS), false);
     }
 
     @GetMapping("/popular")
-    public List<StockInformation> getTopPopularStocks(@RequestParam(name = "number") Optional<Integer> numberOfStocks) {
+    public List<StockAnalysis> getTopPopularStocks(@RequestParam(name = "number") Optional<Integer> numberOfStocks) {
         return mainService.getTopPopularStocks(numberOfStocks.orElse(DEFAULT_NO_OF_STOCKS));
     }
 

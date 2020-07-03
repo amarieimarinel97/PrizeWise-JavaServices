@@ -32,7 +32,7 @@ public class StockController implements ICrudController<Stock, String> {
 
     @PutMapping
     public Stock update(@RequestBody Stock stock, String id) {
-        return service.update(stock);
+        return service.update(stock, id);
     }
 
     @GetMapping("/{symbol}")

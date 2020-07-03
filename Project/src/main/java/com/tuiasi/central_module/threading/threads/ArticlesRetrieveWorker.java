@@ -2,7 +2,7 @@ package com.tuiasi.central_module.threading.threads;
 
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.crawler_module.model.Article;
-import com.tuiasi.central_module.model.StockInformation;
+import com.tuiasi.central_module.model.StockAnalysis;
 import com.tuiasi.central_module.service.AlgorithmService;
 import com.tuiasi.central_module.threading.NotifyingThread;
 import org.jsoup.Jsoup;
@@ -18,11 +18,11 @@ import java.util.TreeSet;
 public class ArticlesRetrieveWorker extends NotifyingThread {
 
     private AlgorithmService algorithmService;
-    private StockInformation stockInformation;
+    private StockAnalysis stockAnalysis;
 
-    public ArticlesRetrieveWorker(AlgorithmService algorithmService, StockInformation stockInformation) {
+    public ArticlesRetrieveWorker(AlgorithmService algorithmService, StockAnalysis stockAnalysis) {
         this.algorithmService = algorithmService;
-        this.stockInformation = stockInformation;
+        this.stockAnalysis = stockAnalysis;
     }
 
     @Override
@@ -31,18 +31,18 @@ public class ArticlesRetrieveWorker extends NotifyingThread {
     }
 
     private void handleArticles() {
-        crawlStockArticles(stockInformation);
-        algorithmService.getArticlesSentimentAnalysis(stockInformation);
+        crawlStockArticles(stockAnalysis);
+        algorithmService.getArticlesSentimentAnalysis(stockAnalysis);
     }
 
-    private void crawlStockArticles(StockInformation stockInformation) {
+    private void crawlStockArticles(StockAnalysis stockAnalysis) {
         Set<Article> articles = new TreeSet<>();
 
         Document doc = null;
         try {
-            doc = Jsoup.connect("http://markets.businessinsider.com/news/" + stockInformation.getStock().getSymbol()).get();
+            doc = Jsoup.connect("http://markets.businessinsider.com/news/" + stockAnalysis.getStock().getSymbol()).get();
         } catch (IOException e) {
-            throw new ObjectNotFoundException("Symbol " + stockInformation.getStock().getSymbol() + " not found.");
+            throw new ObjectNotFoundException("Symbol " + stockAnalysis.getStock().getSymbol() + " not found.");
         }
         Elements articlesHTML = doc.select("div.news-by-company");
         articlesHTML.select("div.col-md-12").forEach(element ->
@@ -50,11 +50,11 @@ public class ArticlesRetrieveWorker extends NotifyingThread {
                         .title(element.select(".news-link").text())
                         .lastUpdated(getArticleLastUpdated(element.select("span").text()))
                         .link(getArticleLink(element))
-                        .stock(stockInformation.getStock())
+                        .stock(stockAnalysis.getStock())
                         .build())
         );
 //        crawlImportantRecentArticles(articles, 0);
-        stockInformation.setArticles(articles);
+        stockAnalysis.setArticles(articles);
     }
 
     private void crawlImportantRecentArticles(Set<Article> articles, int noOfArticles) {

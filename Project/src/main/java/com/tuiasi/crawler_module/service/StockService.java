@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-public class StockService {
+public class StockService implements ICrudService<Stock, String> {
 
     private StockRepository repository;
 
@@ -43,9 +43,9 @@ public class StockService {
         }
     }
 
-    public Stock update(Stock stock) {
+    public Stock update(Stock stock, String symbol) {
         try {
-            Optional<Stock> result = repository.update(stock);
+            Optional<Stock> result = repository.update(stock, symbol);
             return result
                     .orElseThrow(() -> new ObjectNotFoundException("Stock with symbol: " + stock.getSymbol() + " does not exist"));
         } catch (Exception e) {

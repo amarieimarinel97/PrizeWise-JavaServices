@@ -14,7 +14,7 @@ import java.util.*;
 
 @Slf4j
 @Repository
-public class StockRepository {
+public class StockRepository implements ICrudRepository<Stock, String> {
 
     private EntityManager entityManager;
 
@@ -28,7 +28,7 @@ public class StockRepository {
         try {
             if (this.get(stock.getSymbol()).isPresent()) {
                 log.info("Article already existing. Updating preexising entry");
-                return this.update(stock)
+                return this.update(stock, stock.getSymbol())
                         .orElseThrow(() -> new ObjectNotFoundException("Stock with id: " + stock.getSymbol() + " could not be inserted."));
             }
         } catch (ObjectNotFoundException e) {
@@ -64,7 +64,7 @@ public class StockRepository {
         }
     }
 
-    public Optional<Stock> update(Stock stock) {
+    public Optional<Stock> update(Stock stock, String symbol) {
         EntityTransaction entityTransaction = entityManager.getTransaction();
         try {
             entityTransaction.begin();
