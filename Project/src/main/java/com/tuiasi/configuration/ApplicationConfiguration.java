@@ -50,7 +50,7 @@ public class ApplicationConfiguration {
 
         LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
         factory.setJpaVendorAdapter(vendorAdapter);
-        factory.setPackagesToScan("com.tuiasi.model");
+        factory.setPackagesToScan("com.tuiasi");
         factory.setDataSource(getSpringDataSource());
         factory.afterPropertiesSet();
         return factory.getObject();

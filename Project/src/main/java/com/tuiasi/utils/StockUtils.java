@@ -1,8 +1,8 @@
 package com.tuiasi.utils;
 
 import com.tuiasi.exception.ObjectNotFoundException;
-import com.tuiasi.model.Article;
-import com.tuiasi.model.StockContext;
+import com.tuiasi.crawler_module.model.Article;
+import com.tuiasi.crawler_module.model.StockContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;

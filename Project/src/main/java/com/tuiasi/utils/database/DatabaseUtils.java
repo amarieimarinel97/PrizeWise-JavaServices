@@ -1,7 +1,7 @@
 package com.tuiasi.utils.database;
 
-import com.tuiasi.model.StockContext;
-import com.tuiasi.repository.StockContextRepository;
+import com.tuiasi.crawler_module.model.StockContext;
+import com.tuiasi.crawler_module.repository.StockContextRepository;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
