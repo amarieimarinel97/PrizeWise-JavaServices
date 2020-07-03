@@ -26,13 +26,13 @@ public class Stock {
     @Column(name = "last_updated")
     private Date lastUpdated;
 
-    @Column(name = "NOC")
+    @Column(name = "news_coefficient")
     private Double newsOptimismCoefficient;
 
-    @Column(name = "HOC")
+    @Column(name = "history_coefficient")
     private Double historyOptimismCoefficient;
 
-    @Column(name = "ERC")
+    @Column(name = "experts_coefficient")
     private Double expertsRecommendationCoefficient;
 
     @Column(name = "predicted_change")
@@ -42,7 +42,7 @@ public class Stock {
     private Double price;
 
     @Column
-    private Integer hits;
+    private Integer views;
 
     @Transient
     @JsonIgnore

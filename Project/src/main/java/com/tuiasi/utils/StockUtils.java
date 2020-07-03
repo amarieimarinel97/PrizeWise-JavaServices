@@ -2,18 +2,14 @@ package com.tuiasi.utils;
 
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.model.Article;
-import com.tuiasi.model.StockInformation;
-import com.tuiasi.model.StockSymbol;
+import com.tuiasi.model.StockContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Component
@@ -41,9 +37,9 @@ public class StockUtils {
         return new String[]{symbol, companyName};
     }
 
-    public List<StockSymbol> randomlyFilterOutElements(List<StockSymbol> input, int noOfElements) {
+    public List<StockContext> randomlyFilterOutElements(List<StockContext> input, int noOfElements) {
         Random rand = new Random();
-        List<StockSymbol> output = new ArrayList<>();
+        List<StockContext> output = new ArrayList<>();
         for (int i = 0; i < noOfElements; ++i) {
             int randomIndex = rand.nextInt(input.size());
             output.add(input.get(randomIndex));

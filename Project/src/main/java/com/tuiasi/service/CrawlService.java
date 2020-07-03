@@ -4,7 +4,7 @@ package com.tuiasi.service;
 import com.tuiasi.model.*;
 import com.tuiasi.model.utils.StockInformationWithTimestamp;
 import com.tuiasi.repository.StockRepository;
-import com.tuiasi.repository.StockSymbolRepository;
+import com.tuiasi.repository.StockContextRepository;
 import com.tuiasi.threading.threads.MainThread;
 import com.tuiasi.utils.StockUtils;
 import com.tuiasi.utils.businessinsider.BusinessInsiderCrawler;
@@ -13,14 +13,10 @@ import com.tuiasi.utils.reddit.RedditCrawler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -39,10 +35,10 @@ public class CrawlService {
     private MarketwatchCrawler marketwatchCrawler;
     private StockEvolutionService stockEvolutionService;
     private StockRepository stockRepository;
-    private StockSymbolRepository stockSymbolRepository;
+    private StockContextRepository stockContextRepository;
 
     @Autowired
-    public CrawlService(StockSymbolRepository stockSymbolRepository, StockRepository stockRepository, AlgorithmService algorithmService, RedditCrawler redditCrawler, ArticleService articleService, BusinessInsiderCrawler businessInsiderCrawler, StockService stockService, StockUtils stockUtils, MarketwatchCrawler marketwatchCrawler, StockEvolutionService stockEvolutionService
+    public CrawlService(StockContextRepository stockContextRepository, StockRepository stockRepository, AlgorithmService algorithmService, RedditCrawler redditCrawler, ArticleService articleService, BusinessInsiderCrawler businessInsiderCrawler, StockService stockService, StockUtils stockUtils, MarketwatchCrawler marketwatchCrawler, StockEvolutionService stockEvolutionService
     ) {
         this.algorithmService = algorithmService;
         this.redditCrawler = redditCrawler;
@@ -53,7 +49,7 @@ public class CrawlService {
         this.marketwatchCrawler = marketwatchCrawler;
         this.stockEvolutionService = stockEvolutionService;
         this.stockRepository = stockRepository;
-        this.stockSymbolRepository = stockSymbolRepository;
+        this.stockContextRepository = stockContextRepository;
         this.dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     }
 

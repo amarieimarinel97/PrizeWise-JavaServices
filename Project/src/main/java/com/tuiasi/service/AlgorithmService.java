@@ -36,7 +36,7 @@ public class AlgorithmService {
         }
         else
             throw new ObjectNotFoundException("Stock evolution information not found.");
-        stockInfo.getStock().setHistoryOptimismCoefficient(handleHOC(result.getBody().getChanges()));
+        stockInfo.getStock().setHistoryOptimismCoefficient(handleHOC(result.getBody().getPercentageChanges()));
     }
 
     private Double handleHOC(Double[] changes) {

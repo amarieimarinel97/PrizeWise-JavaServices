@@ -8,26 +8,31 @@ import javax.persistence.*;
 
 @Data
 @Builder
-@Table(name = "stock_evolution")
+@Table(name = "stock_evolutions")
 @Entity
 public class StockEvolution {
 
     @Id
-    @Column(name = "stock_id")
+    @Column(name = "stock_symbol")
     private String stockId;
 
-    @Column
-    private Double[] prediction;
+    @Column(name="predicted_evolution")
+    private Double[] predictedEvolution;
 
-    @Column
-    private Double[] changes;
+    @Column(name="percentage_changes")
+    private Double[] percentageChanges;
 
     @Column
     private Double[] deviation;
 
-    @Column
-    private Double[] history;
+    @Column(name="past_evolution")
+    private Double[] pastEvolution;
 
-    @Column(name="history_days")
-    private String[] historyDays;
+    @Column(name="past_days")
+    private String[] pastDays;
+
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "stock_symbol")
+    private Stock stock;
 }

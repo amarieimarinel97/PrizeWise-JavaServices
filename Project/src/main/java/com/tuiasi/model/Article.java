@@ -41,7 +41,7 @@ public class Article implements Comparable {
 
     @ManyToOne
     @JsonIgnore
-    @JoinColumn(name = "stock_id")
+    @JoinColumn(name = "stock_symbol")
     private Stock stock;
 
     @Column(unique = true)

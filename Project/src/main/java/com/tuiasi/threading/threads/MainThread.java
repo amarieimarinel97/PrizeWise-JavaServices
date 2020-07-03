@@ -46,7 +46,7 @@ public class MainThread implements ThreadListener {
                     articleService.getLastArticlesBySymbol(
                             this.stockInformation.getStock().getSymbol(), NO_OF_ARTICLES_TO_RETRIEVE));
             this.stockInformation.setStockEvolution(stockEvolutionService.get(this.stockInformation.getStock().getSymbol()));
-            this.stockInformation.getStock().setHits(this.stockInformation.getStock().getHits() + 1);
+            this.stockInformation.getStock().setViews(this.stockInformation.getStock().getViews() + 1);
             System.gc();
         } else {
             List<NotifyingThread> workers = new ArrayList<>();
@@ -54,7 +54,7 @@ public class MainThread implements ThreadListener {
             workers.add(new ExpertRecommendationWorker(this.stockInformation.getStock()));
             workers.add(new StockRegressionWorker(this.algorithmService, this.stockInformation));
             workers.add(new ArticlesRetrieveWorker(this.algorithmService, this.stockInformation));
-            this.stockInformation.getStock().setHits(preexistingStock.map(stock -> stock.getHits() + 1).orElse(1));
+            this.stockInformation.getStock().setViews(preexistingStock.map(stock -> stock.getViews() + 1).orElse(1));
             this.noOfAliveThreads = workers.size();
 
             for (NotifyingThread worker : workers) {

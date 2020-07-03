@@ -1,7 +1,7 @@
 package com.tuiasi.utils.database;
 
-import com.tuiasi.model.StockSymbol;
-import com.tuiasi.repository.StockSymbolRepository;
+import com.tuiasi.model.StockContext;
+import com.tuiasi.repository.StockContextRepository;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -10,16 +10,15 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.FileReader;
-import java.util.Iterator;
 
 @Component
 public class DatabaseUtils {
 
-    private StockSymbolRepository stockSymbolRepository;
+    private StockContextRepository stockContextRepository;
 
     @Autowired
-    public DatabaseUtils(StockSymbolRepository stockSymbolRepository) {
-        this.stockSymbolRepository = stockSymbolRepository;
+    public DatabaseUtils(StockContextRepository stockContextRepository) {
+        this.stockContextRepository = stockContextRepository;
     }
 
     public void initStockSymbolDatabase() {
@@ -27,8 +26,8 @@ public class DatabaseUtils {
         try {
             JSONArray jsonArray = (JSONArray) jsonParser.parse(new FileReader("symbols.json"));
             for (JSONObject jsonObject : (Iterable<JSONObject>) jsonArray) {
-                stockSymbolRepository.add(
-                        StockSymbol.builder()
+                stockContextRepository.add(
+                        StockContext.builder()
                                 .name((String) jsonObject.get("Name"))
                                 .symbol((String) jsonObject.get("Symbol"))
                                 .sector((String) jsonObject.get("Sector"))
@@ -42,8 +41,8 @@ public class DatabaseUtils {
 
     @PostConstruct
     private void init() {
-        if(stockSymbolRepository.checkIfTableIsEmpty())
-            this.initStockSymbolDatabase();
+//        if(stockSymbolRepository.checkIfTableIsEmpty())
+//            this.initStockSymbolDatabase();
     }
 
 
