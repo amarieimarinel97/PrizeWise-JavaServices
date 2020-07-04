@@ -112,7 +112,7 @@ public class ExpertRecommendationWorker extends NotifyingThread {
             totalRecommendationPoints += currentRecommendation.getPoints();
             ++totalRecommendations;
         }
-        return totalRecommendationPoints / totalRecommendations;
+        return totalRecommendationPoints / totalRecommendations; // TODO: bug, bad formula have to redo like on HOC
     }
 
     public static long getDateDiff(Date date1, Date date2, TimeUnit timeUnit) {

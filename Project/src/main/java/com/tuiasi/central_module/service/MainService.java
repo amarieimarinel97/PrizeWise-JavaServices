@@ -8,6 +8,7 @@ import com.tuiasi.crawler_module.repository.StockRepository;
 import com.tuiasi.crawler_module.repository.StockContextRepository;
 import com.tuiasi.central_module.threading.threads.MainThread;
 import com.tuiasi.crawler_module.service.ArticleService;
+import com.tuiasi.crawler_module.service.StockContextService;
 import com.tuiasi.crawler_module.service.StockService;
 import com.tuiasi.utils.StockUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -32,17 +33,17 @@ public class MainService {
     private StockUtils stockUtils;
     private StockEvolutionService stockEvolutionService;
     private StockRepository stockRepository;
-    private StockContextRepository stockContextRepository;
+    private StockContextService stockContextService;
 
     @Autowired
-    public MainService(StockContextRepository stockContextRepository, StockRepository stockRepository, AlgorithmService algorithmService, ArticleService articleService, StockService stockService, StockUtils stockUtils, StockEvolutionService stockEvolutionService) {
+    public MainService(StockContextService stockContextService, StockRepository stockRepository, AlgorithmService algorithmService, ArticleService articleService, StockService stockService, StockUtils stockUtils, StockEvolutionService stockEvolutionService) {
         this.algorithmService = algorithmService;
         this.articleService = articleService;
         this.stockService = stockService;
         this.stockUtils = stockUtils;
         this.stockEvolutionService = stockEvolutionService;
         this.stockRepository = stockRepository;
-        this.stockContextRepository = stockContextRepository;
+        this.stockContextService = stockContextService;
         this.dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     }
 
@@ -59,7 +60,7 @@ public class MainService {
 
 
     public List<StockAnalysis> getTopPopularStocks(int noOfStocks) {
-        return stockService.getStocksSortedBy("hits", noOfStocks, true)
+        return stockService.getStocksSortedBy("views", noOfStocks, true)
                 .stream()
                 .map(stock -> StockAnalysis.builder().stock(stock).build())
                 .collect(Collectors.toList());
@@ -116,7 +117,7 @@ public class MainService {
                         .company(stockSymbolAndCompany[1])
                         .build())
                 .build();
-        MainThread mainThread = new MainThread(stockAnalysis, algorithmService, articleService, stockService, stockUtils, stockEvolutionService, stockRepository);
+        MainThread mainThread = new MainThread(stockAnalysis, algorithmService, articleService, stockService, stockUtils, stockEvolutionService, stockRepository, stockContextService);
 
         try {
             mainThread.run(saveInDatabase, cacheValidityTimeMillis);

@@ -37,6 +37,8 @@ public class StockUtils {
         return new String[]{symbol, companyName};
     }
 
+
+
     public List<StockContext> randomlyFilterOutElements(List<StockContext> input, int noOfElements) {
         Random rand = new Random();
         List<StockContext> output = new ArrayList<>();

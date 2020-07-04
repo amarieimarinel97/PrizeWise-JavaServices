@@ -1,11 +1,13 @@
 package com.tuiasi.central_module.service;
 
+import com.tuiasi.crawler_module.model.StockContext;
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.crawler_module.model.Article;
 import com.tuiasi.central_module.model.utils.SentimentAnalysisResult;
 import com.tuiasi.central_module.model.StockEvolution;
 import com.tuiasi.central_module.model.StockAnalysis;
 import com.tuiasi.utils.AlgorithmServerAddress;
+import com.tuiasi.utils.MathOperationsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -38,10 +41,35 @@ public class AlgorithmService {
         stockInfo.getStock().setHistoryOptimismCoefficient(handleHOC(result.getBody().getPercentageChanges()));
     }
 
+    public void handleStockContextPrediction(StockAnalysis stockInfo, int days) {
+        String uri = algorithmServerAddress.pythonAlgorithmServerAddress + CONTEXT_ANALYSIS_PATH;
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("symbol", "DIA");
+        jsonObject.put("days", days);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<StockEvolution> result = restTemplate.postForEntity(uri, jsonObject, StockEvolution.class);
+        if (result.hasBody()) {
+            stockInfo.setStockEvolution(result.getBody());
+        } else
+            throw new ObjectNotFoundException("Stock evolution information not found.");
+        stockInfo.setStockContext(
+                StockContext.builder()
+                        .symbol(stockInfo.getStock().getSymbol())
+                        .indicesPrediction(handleIndicesPrediction(result.getBody().getPercentageChanges()))
+                        .sectorPrediction(handleIndicesPrediction(result.getBody().getPercentageChanges()))
+                        .build()
+        );
+    }
+
+    private Double handleIndicesPrediction(Double[] percentageChanges) {
+        if (Objects.isNull(percentageChanges) || percentageChanges.length < 1)
+            return DEFAULT_SCALE_NEUTRAL;
+        return DEFAULT_SCALE_NEUTRAL + percentageChanges[1];
+    }
+
     private Double handleHOC(Double[] changes) {
-        Double sum = 0.0;
-        for (Double d : changes) sum += d;
-        Double result = sum / changes.length - 1;
+        Double result = MathOperationsUtils.generateHOCBasedOnNormalDistribution(changes);
         result = result / 2 + 5; //scale in [0,10]
         result = result > 10 ? 10 : result;
         result = result < 0 ? 0 : result;
@@ -83,7 +111,8 @@ public class AlgorithmService {
     }
 
     private final String TEXTUAL_ANALYSIS_PATH = "/textual";
-    private final String CONTEXT_ANALYSIS_PATH = "/context";
+    private final String CONTEXT_ANALYSIS_PATH = "/regression";
+    private final Double DEFAULT_SCALE_NEUTRAL = 5.0;
 }
 
 

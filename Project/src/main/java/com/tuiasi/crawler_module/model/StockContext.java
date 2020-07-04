@@ -1,5 +1,6 @@
 package com.tuiasi.crawler_module.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tuiasi.crawler_module.model.Stock;
 import lombok.Builder;
 import lombok.Data;
@@ -28,6 +29,7 @@ public class StockContext {
 
     @OneToOne
     @MapsId
+    @JsonIgnore
     @JoinColumn(name = "symbol")
     private Stock stock;
 }
