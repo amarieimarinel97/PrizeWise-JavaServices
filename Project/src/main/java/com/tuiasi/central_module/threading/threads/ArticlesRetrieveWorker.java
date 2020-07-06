@@ -40,7 +40,7 @@ public class ArticlesRetrieveWorker extends NotifyingThread {
 
         Document doc = null;
         try {
-            doc = Jsoup.connect("http://markets.businessinsider.com/news/" + stockAnalysis.getStock().getSymbol()).get();
+            doc = Jsoup.connect(ARTICLES_PAGE_LINK + stockAnalysis.getStock().getSymbol()).get();
         } catch (IOException e) {
             throw new ObjectNotFoundException("Symbol " + stockAnalysis.getStock().getSymbol() + " not found.");
         }
@@ -53,7 +53,7 @@ public class ArticlesRetrieveWorker extends NotifyingThread {
                         .stock(stockAnalysis.getStock())
                         .build())
         );
-//        crawlImportantRecentArticles(articles, 0);
+        crawlImportantRecentArticles(articles, NO_OF_ARTICLES_BODIES_TO_CRAWL);
         stockAnalysis.setArticles(articles);
     }
 
@@ -109,4 +109,7 @@ public class ArticlesRetrieveWorker extends NotifyingThread {
                 return null;
         }
     }
+
+    private final String ARTICLES_PAGE_LINK = "http://markets.businessinsider.com/news/";
+    private final Integer NO_OF_ARTICLES_BODIES_TO_CRAWL = 0;
 }
