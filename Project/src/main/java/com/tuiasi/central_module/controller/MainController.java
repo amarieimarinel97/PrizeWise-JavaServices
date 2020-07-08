@@ -33,6 +33,18 @@ public class MainController {
         return stockAnalysis;
     }
 
+    @GetMapping("/analyze_articles")
+    public StockAnalysis analyzeStockArticles(@RequestParam(name = "stock") String stock,
+                                              @RequestParam(name = "save") Optional<Boolean> saveInDatabase) {
+        return this.mainService.analyzeStockArticles(stock, saveInDatabase.orElse(false));
+    }
+
+    @GetMapping("/analyze_context")
+    public StockAnalysis analyzeStockContext(@RequestParam(name = "stock") String stock,
+                                              @RequestParam(name = "save") Optional<Boolean> saveInDatabase) {
+        return this.mainService.analyzeStock(stock, saveInDatabase.orElse(false));
+    }
+
     @GetMapping("/growing")
     public List<StockAnalysis> getTopGrowingStocks(@RequestParam(name = "number") Optional<Integer> numberOfStocks) {
         return mainService.getTopGrowingStocks(numberOfStocks.orElse(DEFAULT_NO_OF_STOCKS), true);

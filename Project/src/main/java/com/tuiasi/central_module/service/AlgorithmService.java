@@ -101,7 +101,12 @@ public class AlgorithmService {
         List<Article> articleList = new ArrayList<>(stockAnalysis.getArticles());
         List<String> textToSendToAnalysis = new ArrayList<>();
         for (Article art : articleList) {
-            textToSendToAnalysis.add(art.getTitle());
+            textToSendToAnalysis.add(art.getTitle() +
+                    (Objects.isNull(art.getBody()) ?
+                            "" :
+                            ".\n" + art.getBody()
+                    )
+            );
         }
         double[] sentimentAnalysisResult = this.getSentimentAnalysis(textToSendToAnalysis.toArray(new String[0]));
         for (int i = 0; i < sentimentAnalysisResult.length; ++i)

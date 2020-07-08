@@ -2,6 +2,7 @@ package com.tuiasi.central_module.service;
 
 
 import com.tuiasi.central_module.model.StockAnalysis;
+import com.tuiasi.central_module.threading.threads.MainArticlesThread;
 import com.tuiasi.crawler_module.model.*;
 import com.tuiasi.central_module.model.utils.StockInformationWithTimestamp;
 import com.tuiasi.crawler_module.repository.StockRepository;
@@ -49,6 +50,10 @@ public class MainService {
 
     public StockAnalysis analyzeStock(String stock, boolean saveInDatabase) {
         return analyzeStockWithCache(stock, saveInDatabase, Optional.empty());
+    }
+
+    public StockAnalysis analyzeStockArticles(String stock, boolean saveInDatabase) {
+        return analyzeStockArticlesWithCache(stock, saveInDatabase, Optional.empty());
     }
 
     public List<StockAnalysis> getTopGrowingStocks(int noOfStocks, boolean isDescendingOrder) {
@@ -121,6 +126,26 @@ public class MainService {
 
         try {
             mainThread.run(saveInDatabase, cacheValidityTimeMillis);
+        } catch (InterruptedException e) {
+            log.error("Could not process stock " + stock);
+            e.printStackTrace();
+        }
+        return stockAnalysis;
+    }
+
+
+    private StockAnalysis analyzeStockArticlesWithCache(String stock, boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) {
+        String[] stockSymbolAndCompany = stockUtils.searchStockByCompany(stock);
+        StockAnalysis stockAnalysis = StockAnalysis.builder()
+                .stock(Stock.builder()
+                        .symbol(stockSymbolAndCompany[0])
+                        .company(stockSymbolAndCompany[1])
+                        .build())
+                .build();
+        MainArticlesThread mainArticlesThread = new MainArticlesThread(stockAnalysis, stockService, algorithmService, articleService, stockRepository);
+
+        try {
+            mainArticlesThread.run(saveInDatabase, cacheValidityTimeMillis);
         } catch (InterruptedException e) {
             log.error("Could not process stock " + stock);
             e.printStackTrace();

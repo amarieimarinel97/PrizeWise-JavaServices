@@ -111,10 +111,16 @@ public class ArticleRepository implements ICrudRepository<Article, Integer> {
     }
 
     public Set<Article> getLastArticlesBySymbol(String symbol, int numberOfArticles){
-        Query query = entityManager.createQuery(SQL_SELECT_WHERE);
+        Query query = entityManager.createQuery(SQL_SELECT_ARTICLES_BY_SYMBOL);
         query.setParameter("symbol", symbol);
         return new HashSet<>(query.setMaxResults(numberOfArticles).getResultList());
     }
 
-    private final String SQL_SELECT_WHERE = "SELECT a FROM Article a JOIN FETCH a.stock WHERE a.stock.symbol = :symbol ORDER BY a.lastUpdated";
+    public Set<Article> getLastArticlesWithBodiesBySymbol(String symbol, int numberOfArticles){
+        Query query = entityManager.createQuery(SQL_SELECT_ARTICLES_WITH_BODY);
+        query.setParameter("symbol", symbol);
+        return new HashSet<>(query.setMaxResults(numberOfArticles).getResultList());
+    }
+    private final String SQL_SELECT_ARTICLES_WITH_BODY = "SELECT a FROM Article a JOIN FETCH a.stock WHERE a.stock.symbol = :symbol AND a.body IS NOT NULL ORDER BY a.lastUpdated ";
+    private final String SQL_SELECT_ARTICLES_BY_SYMBOL = "SELECT a FROM Article a JOIN FETCH a.stock WHERE a.stock.symbol = :symbol ORDER BY a.lastUpdated";
 }
