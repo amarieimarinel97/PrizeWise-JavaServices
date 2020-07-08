@@ -86,6 +86,8 @@ public class MainThread implements ThreadListener {
             this.stockAnalysis.getStock().setArticles(this.stockAnalysis.getArticles());
             this.stockAnalysis.getStockEvolution().setStockId(this.stockAnalysis.getStock().getSymbol());
             this.stockAnalysis.getStockContext().setName(this.stockAnalysis.getStock().getCompany());
+            this.stockAnalysis.getStockContext().setSymbol(this.stockAnalysis.getStock().getSymbol());
+
 
 
             if (saveInDatabase) {

@@ -75,6 +75,8 @@ public class Article implements Comparable {
     public int compareTo(Object o) {
         if (!(o instanceof Article))
             return -1;
+        if(Objects.isNull(o) || Objects.isNull(((Article) o).lastUpdated))
+            return -1;
         if (this.lastUpdated < ((Article) o).lastUpdated)
             return -1;
         else return 1;
