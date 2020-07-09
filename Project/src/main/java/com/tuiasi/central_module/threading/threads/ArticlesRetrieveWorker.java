@@ -144,7 +144,6 @@ public class ArticlesRetrieveWorker extends NotifyingThread implements ThreadLis
         return link;
     }
 
-
     private Double getArticleLastUpdated(String element) {
         String[] elements = element.split(" ");
         String timeElapsed = elements[elements.length - 1];
