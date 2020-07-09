@@ -27,9 +27,9 @@ public class StockContext {
     @Column(name="indices_prediction")
     private Double indicesPrediction;
 
-    @OneToOne
-    @MapsId
-    @JsonIgnore
-    @JoinColumn(name = "symbol")
-    private Stock stock;
+//    @OneToOne
+//    @MapsId
+//    @JsonIgnore
+//    @JoinColumn(name = "symbol")
+//    private Stock stock;
 }

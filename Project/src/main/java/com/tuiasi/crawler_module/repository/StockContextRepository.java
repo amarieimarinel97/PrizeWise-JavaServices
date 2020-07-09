@@ -1,5 +1,6 @@
 package com.tuiasi.crawler_module.repository;
 
+import com.tuiasi.central_module.model.StockEvolution;
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.crawler_module.model.StockContext;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,13 @@ public class StockContextRepository implements ICrudRepository<StockContext, Str
 
     public StockContext add(StockContext stockContext) {
 
+        Optional<StockContext> preexistingEntry = get(stockContext.getSymbol());
+        if (preexistingEntry.isPresent()) {
+            log.info("Stock context entry already existing. Updating preexising entry");
+            return this.update(preexistingEntry.get(), preexistingEntry.get().getSymbol())
+                    .orElseThrow(() -> new ObjectNotFoundException("Stock context of stock: " + stockContext.getSymbol() + " could not be inserted."));
+        }
+
         EntityTransaction entityTransaction = entityManager.getTransaction();
         try {
             entityTransaction.begin();
@@ -47,47 +55,48 @@ public class StockContextRepository implements ICrudRepository<StockContext, Str
         return stockContext;
     }
 
-    public Optional<StockContext> get(String sector) {
+    public Optional<StockContext> get(String symbol) {
         EntityTransaction entityTransaction = entityManager.getTransaction();
         try {
             entityTransaction.begin();
-            StockContext result = entityManager.find(StockContext.class, sector);
+            StockContext result = entityManager.find(StockContext.class, symbol);
             entityTransaction.commit();
-            log.info("StockSector with sector: " + sector + " retrieved.");
+            log.info("StockContext with symbol: " + symbol + " retrieved.");
             return Optional.of(result);
         } catch (Exception e) {
             entityTransaction.rollback();
-            throw new ObjectNotFoundException("StockSector with sector: " + sector + " could not be found.");
+            log.info("StockContext with symbol: " + symbol + " could not be found.");
+            return Optional.empty();
         }
     }
 
-    public Optional<StockContext> update(StockContext stockContext, String sector) {
+    public Optional<StockContext> update(StockContext stockContext, String symbol) {
         EntityTransaction entityTransaction = entityManager.getTransaction();
         try {
             entityTransaction.begin();
             StockContext result = entityManager.merge(stockContext);
             entityTransaction.commit();
-            log.info("StockSector with sector: " + sector + " updated.");
+            log.info("StockContext with symbol: " + symbol + " updated.");
             return Optional.of(result);
         } catch (Exception e) {
             entityTransaction.rollback();
-            log.error("StockSector with sector: " + sector + " could not be updated.");
+            log.error("StockContext with symbol: " + symbol + " could not be updated.");
             log.error(e.getMessage());
         }
         return Optional.empty();
     }
 
-    public void delete(String sector) {
+    public void delete(String symbol) {
         EntityTransaction entityTransaction = entityManager.getTransaction();
         try {
-            StockContext result = get(sector).orElseThrow(ObjectNotFoundException::new);
+            StockContext result = get(symbol).orElseThrow(ObjectNotFoundException::new);
             entityTransaction.begin();
             entityManager.remove(result);
             entityTransaction.commit();
-            log.info("StockSector with sector: " + sector + " deleted.");
+            log.info("StockContext with symbol: " + symbol + " deleted.");
         } catch (Exception e) {
             entityTransaction.rollback();
-            throw new ObjectNotFoundException("StockSector with sector: " + sector + " could not be deleted.");
+            throw new ObjectNotFoundException("StockContext with symbol: " + symbol + " could not be deleted.");
         }
     }
 
@@ -100,6 +109,5 @@ public class StockContextRepository implements ICrudRepository<StockContext, Str
         return allQuery.getResultList();
     }
 
-    private final String SQL_EMPTY_TABLE = "SELECT 1 FROM StockSector";
-    ;
+    private final String SQL_EMPTY_TABLE = "SELECT 1 FROM StockContext";
 }
