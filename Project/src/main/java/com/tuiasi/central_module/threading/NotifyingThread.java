@@ -7,9 +7,9 @@ public abstract class NotifyingThread extends Thread {
     private final Set<ThreadListener> threadListeners
             = new CopyOnWriteArraySet<>();
 
-    private final void notifyListeners() {
+    private final void notifyListeners(boolean finishedSuccessful) {
         for (ThreadListener listener : threadListeners) {
-            listener.onThreadComplete(this);
+            listener.onThreadComplete(this, finishedSuccessful);
         }
     }
 
@@ -25,8 +25,9 @@ public abstract class NotifyingThread extends Thread {
     public final void run() {
         try {
             doRun();
-        } finally {
-            notifyListeners();
+            notifyListeners(true);
+        } catch (Exception e) {
+            notifyListeners(false);
         }
     }
 

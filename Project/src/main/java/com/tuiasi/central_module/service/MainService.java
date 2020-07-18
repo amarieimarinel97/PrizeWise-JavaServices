@@ -5,8 +5,9 @@ import com.tuiasi.central_module.model.StockAnalysis;
 import com.tuiasi.central_module.threading.threads.MainArticlesThread;
 import com.tuiasi.crawler_module.model.*;
 import com.tuiasi.central_module.model.utils.StockInformationWithTimestamp;
+import com.tuiasi.exception.ObjectNotFoundException;
+import com.tuiasi.utils.SymbolWithTimestamp;
 import com.tuiasi.crawler_module.repository.StockRepository;
-import com.tuiasi.crawler_module.repository.StockContextRepository;
 import com.tuiasi.central_module.threading.threads.MainThread;
 import com.tuiasi.crawler_module.service.ArticleService;
 import com.tuiasi.crawler_module.service.StockContextService;
@@ -14,12 +15,15 @@ import com.tuiasi.crawler_module.service.StockService;
 import com.tuiasi.utils.StockUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,12 +52,28 @@ public class MainService {
         this.dateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     }
 
-    public StockAnalysis analyzeStock(String stock, boolean saveInDatabase) {
-        return analyzeStockWithCache(stock, saveInDatabase, Optional.empty());
+    public ResponseEntity<StockAnalysis> analyzeStock(String stock, boolean saveInDatabase) {
+        try {
+            StockAnalysis stockAnalysis = analyzeStockWithCache(stock, saveInDatabase, Optional.empty());
+            return new ResponseEntity<>(stockAnalysis, HttpStatus.OK);
+        } catch (ObjectNotFoundException e) {
+            log.error("Could not find stock " + stock);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+        }
     }
 
-    public StockAnalysis analyzeStockArticles(String stock, boolean saveInDatabase) {
-        return analyzeStockArticlesWithCache(stock, saveInDatabase, Optional.empty());
+    public ResponseEntity<StockAnalysis> analyzeStockArticles(String stock, boolean saveInDatabase) {
+        try {
+            StockAnalysis stockAnalysis = analyzeStockArticlesWithCache(stock, saveInDatabase, Optional.empty());
+            return new ResponseEntity<>(stockAnalysis, HttpStatus.OK);
+        } catch (ObjectNotFoundException e) {
+            log.error("Could not find stock " + stock);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
+        }
     }
 
     public List<StockAnalysis> getTopGrowingStocks(int noOfStocks, boolean isDescendingOrder) {
@@ -71,27 +91,20 @@ public class MainService {
                 .collect(Collectors.toList());
     }
 
-    public void handleCookieSetting(String stock, HttpServletResponse response, String cookieValuePrefix) {
-        String formattedDateTime = LocalDateTime.now().format(dateTimeFormatter);
-        Cookie cookie = new Cookie(cookieValuePrefix + stock, formattedDateTime);
-        cookie.setMaxAge(80000);
-//        cookie.setDomain("127.0.0.1");
-        response.addCookie(cookie);
-    }
 
-    public List<StockInformationWithTimestamp> getListOfStocksFromCookies(HttpServletRequest request,
-                                                                          String cookieValuePrefix, Integer limit) {
-        Cookie[] cookies = request.getCookies();
+    public List<StockInformationWithTimestamp> getListOfStocks(List<SymbolWithTimestamp> symbolsList, Integer limit) {
         List<StockInformationWithTimestamp> stockInformationWithTimestamps = new ArrayList<>();
-        if (!Objects.isNull(cookies))
-            Arrays.stream(cookies)
+        if (!Objects.isNull(symbolsList))
+            symbolsList.stream()
                     .limit(limit)
-                    .forEach(cookie -> {
-                                if (cookie.getName().startsWith(cookieValuePrefix))
+                    .forEach(symbol -> {
+                                if (!Objects.isNull(symbol) && symbol.symbol.length() > 0)
                                     stockInformationWithTimestamps.add(
                                             StockInformationWithTimestamp.builder()
-                                                    .stockAnalysis(this.analyzeStockWithCache(cookie.getName().substring(cookieValuePrefix.length()), false, Optional.of(ONE_DAY_IN_MILLIS)))
-                                                    .localDateTime(LocalDateTime.parse(cookie.getValue(), this.dateTimeFormatter))
+                                                    .stockAnalysis(this.analyzeStockWithCache(symbol.symbol, false, Optional.of(ONE_DAY_IN_MILLIS)))
+                                                    .localDateTime(symbol.date.toInstant()
+                                                            .atZone(ZoneId.of("UTC"))
+                                                            .toLocalDateTime())
                                                     .build()
                                     );
                             }
@@ -100,19 +113,6 @@ public class MainService {
         return stockInformationWithTimestamps;
     }
 
-    public boolean removeStockFromWatchlist(String stock, HttpServletRequest request, HttpServletResponse response) {
-        String cookieValue = WATCHLIST_COOKIE_PREFIX + stock;
-
-        boolean isCookieFound = false;
-        for (Cookie cookie : request.getCookies()) {
-            if (cookie.getName().equals(cookieValue)) {
-                isCookieFound = true;
-                cookie.setMaxAge(0);
-                response.addCookie(cookie);
-            }
-        }
-        return isCookieFound;
-    }
 
     private StockAnalysis analyzeStockWithCache(String stock, boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) {
         String[] stockSymbolAndCompany = stockUtils.searchStockByCompany(stock);
@@ -130,7 +130,10 @@ public class MainService {
             log.error("Could not process stock " + stock);
             e.printStackTrace();
         }
-        return stockAnalysis;
+        if (mainThread.allSuccessful)
+            return stockAnalysis;
+        else
+            throw new ObjectNotFoundException("Could not process stock " + stock);
     }
 
 
@@ -150,7 +153,10 @@ public class MainService {
             log.error("Could not process stock " + stock);
             e.printStackTrace();
         }
-        return stockAnalysis;
+        if (mainArticlesThread.allSuccessful)
+            return stockAnalysis;
+        else
+            throw new ObjectNotFoundException("Could not process stock " + stock);
     }
 
     public Long ONE_DAY_IN_MILLIS = (long) 8.64e7;

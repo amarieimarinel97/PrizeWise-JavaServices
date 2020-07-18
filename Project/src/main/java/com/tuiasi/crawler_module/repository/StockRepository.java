@@ -27,7 +27,7 @@ public class StockRepository implements ICrudRepository<Stock, String> {
     public Stock add(Stock stock) {
         try {
             if (this.get(stock.getSymbol()).isPresent()) {
-                log.info("Article already existing. Updating preexising entry");
+                log.info("Stock already existing. Updating preexising entry");
                 return this.update(stock, stock.getSymbol())
                         .orElseThrow(() -> new ObjectNotFoundException("Stock with id: " + stock.getSymbol() + " could not be inserted."));
             }
@@ -55,6 +55,8 @@ public class StockRepository implements ICrudRepository<Stock, String> {
             entityTransaction.begin();
             Stock result = entityManager.find(Stock.class, symbol);
             entityTransaction.commit();
+            if(Objects.isNull(result))
+                throw new ObjectNotFoundException();
             log.info("Stock with symbol: " + symbol + " retrieved.");
             return Optional.of(result);
         } catch (Exception e) {

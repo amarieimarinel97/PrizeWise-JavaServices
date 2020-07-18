@@ -4,11 +4,19 @@ package com.tuiasi.central_module.controller;
 import com.tuiasi.central_module.model.StockAnalysis;
 import com.tuiasi.central_module.model.utils.StockInformationWithTimestamp;
 import com.tuiasi.central_module.service.MainService;
+import com.tuiasi.utils.SymbolWithTimestamp;
+import com.tuiasi.utils.SymbolsTimestampedList;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,26 +32,18 @@ public class MainController {
     }
 
     @GetMapping("/analyze")
-    public StockAnalysis analyzeStock(@RequestParam(name = "stock") String stock,
-                                      @RequestParam(name = "save") Optional<Boolean> saveInDatabase,
-                                      HttpServletResponse response) {
-
-        StockAnalysis stockAnalysis = this.mainService.analyzeStock(stock, saveInDatabase.orElse(false));
-        mainService.handleCookieSetting(stockAnalysis.getStock().getSymbol(), response, mainService.HISTORY_COOKIE_PREFIX);
-        return stockAnalysis;
+    public ResponseEntity<StockAnalysis> analyzeStock(@RequestParam(name = "stock") String stock,
+                                       @RequestParam(name = "save") Optional<Boolean> saveInDatabase,
+                                       HttpServletResponse response) {
+        return this.mainService.analyzeStock(stock, saveInDatabase.orElse(false));
     }
 
     @GetMapping("/analyze_articles")
-    public StockAnalysis analyzeStockArticles(@RequestParam(name = "stock") String stock,
+    public ResponseEntity<StockAnalysis> analyzeStockArticles(@RequestParam(name = "stock") String stock,
                                               @RequestParam(name = "save") Optional<Boolean> saveInDatabase) {
         return this.mainService.analyzeStockArticles(stock, saveInDatabase.orElse(false));
     }
 
-    @GetMapping("/analyze_context")
-    public StockAnalysis analyzeStockContext(@RequestParam(name = "stock") String stock,
-                                              @RequestParam(name = "save") Optional<Boolean> saveInDatabase) {
-        return this.mainService.analyzeStock(stock, saveInDatabase.orElse(false));
-    }
 
     @GetMapping("/growing")
     public List<StockAnalysis> getTopGrowingStocks(@RequestParam(name = "number") Optional<Integer> numberOfStocks) {
@@ -60,24 +60,14 @@ public class MainController {
         return mainService.getTopPopularStocks(numberOfStocks.orElse(DEFAULT_NO_OF_STOCKS));
     }
 
-    @GetMapping("/history")
-    public List<StockInformationWithTimestamp> getHistoryOfStocks(HttpServletRequest request) {
-        return mainService.getListOfStocksFromCookies(request, mainService.HISTORY_COOKIE_PREFIX, DEFAULT_NO_OF_STOCKS);
+    @PostMapping(path="/history")
+    public List<StockInformationWithTimestamp> getHistoryOfStocks(@RequestBody SymbolsTimestampedList symbolsTimestampedList) {
+        return mainService.getListOfStocks(symbolsTimestampedList.getSymbols(), DEFAULT_NO_OF_STOCKS);
     }
 
-    @GetMapping("/watchlist")
-    public List<StockInformationWithTimestamp> getMyWatchlistOfStocks(HttpServletRequest request) {
-        return mainService.getListOfStocksFromCookies(request, mainService.WATCHLIST_COOKIE_PREFIX, DEFAULT_NO_OF_STOCKS);
-    }
-
-    @GetMapping("/watchlist/add")
-    public void addStockToWatchlist(@RequestParam(name = "stock")String stock, HttpServletResponse response) {
-        mainService.handleCookieSetting(stock, response, mainService.WATCHLIST_COOKIE_PREFIX );
-    }
-
-    @GetMapping("/watchlist/remove")
-    public boolean removeStockFromWatchlist(@RequestParam(name = "stock")String stock, HttpServletRequest request, HttpServletResponse response) {
-        return mainService.removeStockFromWatchlist(stock, request, response);
+    @PostMapping("/watchlist")
+    public List<StockInformationWithTimestamp> getMyWatchlistOfStocks(@RequestBody SymbolsTimestampedList symbolsTimestampedList) {
+        return mainService.getListOfStocks(symbolsTimestampedList.getSymbols(), DEFAULT_NO_OF_STOCKS);
     }
 
     private final Integer DEFAULT_NO_OF_STOCKS = 5;

@@ -31,7 +31,7 @@ public class StockUtils {
             }
         }
 
-        if (i == symbols.length)
+        if (i == symbols.length || !symbol.matches("[a-zA-Z0-9]+"))
             throw new ObjectNotFoundException("Stock symbol not found.");
 
         return new String[]{symbol, companyName};

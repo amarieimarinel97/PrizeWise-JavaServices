@@ -10,6 +10,7 @@ import com.tuiasi.crawler_module.service.StockContextService;
 import com.tuiasi.crawler_module.service.StockService;
 import com.tuiasi.central_module.threading.NotifyingThread;
 import com.tuiasi.central_module.threading.ThreadListener;
+import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.utils.StockUtils;
 
 import java.util.*;
@@ -25,6 +26,7 @@ public class MainThread implements ThreadListener {
     private StockContextService stockContextService;
     private boolean saveInDatabase;
     private int noOfAliveThreads;
+    public boolean allSuccessful;
 
 
     public MainThread(StockAnalysis stockAnalysis, AlgorithmService algorithmService, ArticleService articleService, StockService stockService, StockUtils stockUtils, StockEvolutionService stockEvolutionService, StockRepository stockRepository, StockContextService stockContextService) {
@@ -37,13 +39,13 @@ public class MainThread implements ThreadListener {
         this.stockEvolutionService = stockEvolutionService;
         this.stockRepository = stockRepository;
         this.stockContextService = stockContextService;
+        this.allSuccessful = true;
     }
 
-    public void run(boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) throws InterruptedException {
+    public void run(boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) throws InterruptedException, ObjectNotFoundException {
         this.saveInDatabase = saveInDatabase;
         Optional<Stock> preexistingStock = stockRepository.get(this.stockAnalysis.getStock().getSymbol());
-
-        if (preexistingStock.isPresent() && isCacheValid(preexistingStock.get(), cacheValidityTimeMillis.orElse(DEFAULT_CACHE_VALIDITY_TIME_MILLIS))) {
+        if (preexistingStock.isPresent() && !Objects.isNull(preexistingStock.get().getPredictedChange()) && isCacheValid(preexistingStock.get(), cacheValidityTimeMillis.orElse(DEFAULT_CACHE_VALIDITY_TIME_MILLIS))) {
             this.stockAnalysis.setStock(preexistingStock.get());
             this.stockAnalysis.setArticles(
                     articleService.getLastArticlesBySymbol(
@@ -69,31 +71,35 @@ public class MainThread implements ThreadListener {
 
             for (NotifyingThread worker : workers)
                 worker.join();
-        }
 
+        }
     }
 
     @Override
-    public void onThreadComplete(Thread thread) {
-        if (--noOfAliveThreads == 0) {
-            Double ERC = this.stockAnalysis.getStock().getExpertsRecommendationCoefficient();
-            Double HOC = this.stockAnalysis.getStock().getHistoryOptimismCoefficient();
-            Double NOC = this.stockAnalysis.getStock().getNewsOptimismCoefficient();
-            Double indicesCoefficient = this.stockAnalysis.getStockContext().getIndicesPrediction();
-            Double sectorCoefficient = this.stockAnalysis.getStockContext().getSectorPrediction();
-            double predictedChange = (0.25 * ERC + 0.25 * HOC + 0.25 * NOC + 0.125 * indicesCoefficient + 0.125 * sectorCoefficient) - 5;
-            this.stockAnalysis.getStock().setPredictedChange(predictedChange);
-            this.stockAnalysis.getStock().setArticles(this.stockAnalysis.getArticles());
-            this.stockAnalysis.getStockEvolution().setStockId(this.stockAnalysis.getStock().getSymbol());
-            this.stockAnalysis.getStockContext().setName(this.stockAnalysis.getStock().getCompany());
-            this.stockAnalysis.getStockContext().setSymbol(this.stockAnalysis.getStock().getSymbol());
+    public void onThreadComplete(Thread thread, boolean finishedSuccessful) {
+        if (finishedSuccessful) {
+            if (--noOfAliveThreads == 0) {
+                Double ERC = this.stockAnalysis.getStock().getExpertsRecommendationCoefficient();
+                Double HOC = this.stockAnalysis.getStock().getHistoryOptimismCoefficient();
+                Double NOC = this.stockAnalysis.getStock().getNewsOptimismCoefficient();
+                Double indicesCoefficient = this.stockAnalysis.getStockContext().getIndicesPrediction();
+                Double sectorCoefficient = this.stockAnalysis.getStockContext().getSectorPrediction();
+                double predictedChange = (0.25 * ERC + 0.25 * HOC + 0.25 * NOC + 0.125 * indicesCoefficient + 0.125 * sectorCoefficient) - 5;
+                this.stockAnalysis.getStock().setPredictedChange(predictedChange);
+                this.stockAnalysis.getStock().setArticles(this.stockAnalysis.getArticles());
+                this.stockAnalysis.getStockEvolution().setStockId(this.stockAnalysis.getStock().getSymbol());
+                this.stockAnalysis.getStockContext().setName(this.stockAnalysis.getStock().getCompany());
+                this.stockAnalysis.getStockContext().setSymbol(this.stockAnalysis.getStock().getSymbol());
 
-            if (saveInDatabase) {
-                this.stockService.add(this.stockAnalysis.getStock());
-                this.stockAnalysis.getArticles().forEach(article -> articleService.add(article));
-                this.stockEvolutionService.add(stockAnalysis.getStockEvolution());
-                this.stockContextService.add(stockAnalysis.getStockContext());
+                if (saveInDatabase) {
+                    this.stockService.add(this.stockAnalysis.getStock());
+                    this.stockAnalysis.getArticles().forEach(article -> articleService.add(article));
+                    this.stockEvolutionService.add(stockAnalysis.getStockEvolution());
+                    this.stockContextService.add(stockAnalysis.getStockContext());
+                }
             }
+        } else {
+            this.allSuccessful = false;
         }
     }
 

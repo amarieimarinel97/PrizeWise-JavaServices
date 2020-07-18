@@ -19,7 +19,6 @@ import java.util.*;
 public class ArticlesRetrieveWorker extends NotifyingThread implements ThreadListener {
 
 
-
     private class ArticleBodyRetrieveWorker extends NotifyingThread {
         public Article article;
 
@@ -61,8 +60,7 @@ public class ArticlesRetrieveWorker extends NotifyingThread implements ThreadLis
         this.noOfArticlesBodiesToCrawl = noOfArticlesToCrawl.orElse(this.DEFAULT_NO_OF_ARTICLES_BODIES_TO_CRAWL);
     }
 
-    @Override
-    public void onThreadComplete(Thread thread) {
+    public void onThreadComplete(Thread thread, boolean finishedSuccessful) {
     }
 
     @Override
@@ -131,7 +129,7 @@ public class ArticlesRetrieveWorker extends NotifyingThread implements ThreadLis
             try {
                 worker.join();
             } catch (InterruptedException e) {
-                log.error("Could not crawl body for article "+worker.article.getTitle());
+                log.error("Could not crawl body for article " + worker.article.getTitle());
             }
         }
     }

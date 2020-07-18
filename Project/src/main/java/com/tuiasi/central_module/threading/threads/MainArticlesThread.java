@@ -10,6 +10,7 @@ import com.tuiasi.crawler_module.model.Stock;
 import com.tuiasi.crawler_module.repository.StockRepository;
 import com.tuiasi.crawler_module.service.ArticleService;
 import com.tuiasi.crawler_module.service.StockService;
+import com.tuiasi.exception.ObjectNotFoundException;
 
 import java.util.*;
 
@@ -21,6 +22,7 @@ public class MainArticlesThread implements ThreadListener {
     private StockRepository stockRepository;
     private StockService stockService;
     private boolean saveInDatabase;
+    public boolean allSuccessful;
 
     public MainArticlesThread(StockAnalysis stockAnalysis, StockService stockService, AlgorithmService algorithmService, ArticleService articleService, StockRepository stockRepository) {
         this.stockAnalysis = stockAnalysis;
@@ -28,6 +30,7 @@ public class MainArticlesThread implements ThreadListener {
         this.articleService = articleService;
         this.stockRepository = stockRepository;
         this.stockService = stockService;
+        this.allSuccessful = true;
     }
 
     private int noOfAliveThreads;
@@ -36,8 +39,11 @@ public class MainArticlesThread implements ThreadListener {
     public void run(boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) throws InterruptedException {
         this.saveInDatabase = saveInDatabase;
         Optional<Stock> preexistingStock = stockRepository.get(this.stockAnalysis.getStock().getSymbol());
-        Set<Article> articlesWithBody = articleService.getLastArticlesWithBodiesBySymbol(this.stockAnalysis.getStock().getSymbol(), NO_OF_ARTICLES_TO_RETRIEVE);
-        if (preexistingStock.isPresent() && isCacheValid(preexistingStock.get(), cacheValidityTimeMillis.orElse(DEFAULT_CACHE_VALIDITY_TIME_MILLIS)) && articlesWithBody.size() >= 5) {
+        Set<Article> articlesWithBody = new HashSet<>();
+        if (preexistingStock.isPresent())
+            articlesWithBody = articleService.getLastArticlesWithBodiesBySymbol(this.stockAnalysis.getStock().getSymbol(), NO_OF_ARTICLES_TO_RETRIEVE);
+
+        if (preexistingStock.isPresent() && isCacheValid(preexistingStock.get(), cacheValidityTimeMillis.orElse(DEFAULT_CACHE_VALIDITY_TIME_MILLIS)) && articlesWithBody.size() >= 4) {
             this.stockAnalysis.setStock(preexistingStock.get());
             this.stockAnalysis.setArticles(
                     articleService.getLastArticlesBySymbol(
@@ -58,17 +64,25 @@ public class MainArticlesThread implements ThreadListener {
 
             for (NotifyingThread worker : workers)
                 worker.join();
+
+
         }
 
     }
 
     @Override
-    public void onThreadComplete(Thread thread) {
-        if (--noOfAliveThreads == 0) {
-            this.stockAnalysis.getStock().setArticles(this.stockAnalysis.getArticles());
-            if (saveInDatabase) {
-                this.stockAnalysis.getArticles().forEach(article -> articleService.add(article));
+    public void onThreadComplete(Thread thread, boolean finishedSuccessful) {
+        if (finishedSuccessful) {
+            if (--noOfAliveThreads <= 0) {
+                this.stockAnalysis.getStock().setArticles(this.stockAnalysis.getArticles());
+                if (saveInDatabase) {
+                    if (stockRepository.get(stockAnalysis.getStock().getSymbol()).isEmpty())
+                        this.stockService.add(stockAnalysis.getStock());
+                    this.stockAnalysis.getArticles().forEach(article -> articleService.add(article));
+                }
             }
+        } else {
+            this.allSuccessful = false;
         }
     }
 
