@@ -2,27 +2,23 @@ package com.tuiasi.central_module.service;
 
 
 import com.tuiasi.central_module.model.StockAnalysis;
-import com.tuiasi.central_module.threading.threads.MainArticlesThread;
-import com.tuiasi.crawler_module.model.*;
 import com.tuiasi.central_module.model.utils.StockInformationWithTimestamp;
-import com.tuiasi.exception.ObjectNotFoundException;
-import com.tuiasi.utils.SymbolWithTimestamp;
-import com.tuiasi.crawler_module.repository.StockRepository;
+import com.tuiasi.central_module.threading.threads.MainArticlesThread;
 import com.tuiasi.central_module.threading.threads.MainThread;
+import com.tuiasi.crawler_module.model.Stock;
+import com.tuiasi.crawler_module.repository.StockRepository;
 import com.tuiasi.crawler_module.service.ArticleService;
 import com.tuiasi.crawler_module.service.StockContextService;
 import com.tuiasi.crawler_module.service.StockService;
+import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.utils.StockUtils;
+import com.tuiasi.utils.SymbolWithTimestamp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;

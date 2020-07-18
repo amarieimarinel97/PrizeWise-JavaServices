@@ -7,9 +7,8 @@ COPY . /project
 WORKDIR /project
 RUN sed -i 's/localhost:5432/diploma-proj-postgres:5432/g' src/main/resources/application.properties
 RUN sed -i 's/localhost:8081/diploma-proj-python:8081/g' src/main/resources/application.properties
-RUN cat src/main/resources/application.properties
 
-RUN mvn clean package spring-boot:repackage
+RUN mvn clean package spring-boot:repackage -DskipTests
 CMD java -jar target/crawler-1.0-SNAPSHOT.jar
 
 #docker build -t java:tag .
