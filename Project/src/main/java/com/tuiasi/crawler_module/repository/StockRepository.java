@@ -112,6 +112,6 @@ public class StockRepository implements ICrudRepository<Stock, String> {
         return new ArrayList<>(query.setMaxResults(limit > 0 ? limit : DEFAULT_STOCKS_NUMBER).getResultList());
     }
 
-    private final String SQL_SELECT_SORT = "SELECT s FROM Stock s ORDER BY s.";
+    private final String SQL_SELECT_SORT = "SELECT s FROM Stock s WHERE s.predictedChange IS NOT NULL ORDER BY s.";
     private final Integer DEFAULT_STOCKS_NUMBER = 5;
 }

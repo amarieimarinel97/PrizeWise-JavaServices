@@ -4,19 +4,12 @@ package com.tuiasi.central_module.controller;
 import com.tuiasi.central_module.model.StockAnalysis;
 import com.tuiasi.central_module.model.utils.StockInformationWithTimestamp;
 import com.tuiasi.central_module.service.MainService;
-import com.tuiasi.utils.SymbolWithTimestamp;
 import com.tuiasi.utils.SymbolsTimestampedList;
-import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,7 +53,7 @@ public class MainController {
         return mainService.getTopPopularStocks(numberOfStocks.orElse(DEFAULT_NO_OF_STOCKS));
     }
 
-    @PostMapping(path="/history")
+    @PostMapping("/history")
     public List<StockInformationWithTimestamp> getHistoryOfStocks(@RequestBody SymbolsTimestampedList symbolsTimestampedList) {
         return mainService.getListOfStocks(symbolsTimestampedList.getSymbols(), DEFAULT_NO_OF_STOCKS);
     }

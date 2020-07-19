@@ -79,9 +79,10 @@ public class MainThread implements ThreadListener {
     public void onThreadComplete(Thread thread, boolean finishedSuccessful) {
         if (finishedSuccessful) {
             if (--noOfAliveThreads == 0) {
-                Double ERC = this.stockAnalysis.getStock().getExpertsRecommendationCoefficient();
                 Double HOC = this.stockAnalysis.getStock().getHistoryOptimismCoefficient();
                 Double NOC = this.stockAnalysis.getStock().getNewsOptimismCoefficient();
+                Double ERC = stockUtils.computeERCFromStockAnalysis(stockAnalysis);
+
                 Double indicesCoefficient = this.stockAnalysis.getStockContext().getIndicesPrediction();
                 Double sectorCoefficient = this.stockAnalysis.getStockContext().getSectorPrediction();
                 double predictedChange = (0.25 * ERC + 0.25 * HOC + 0.25 * NOC + 0.125 * indicesCoefficient + 0.125 * sectorCoefficient) - 5;
@@ -90,6 +91,7 @@ public class MainThread implements ThreadListener {
                 this.stockAnalysis.getStockEvolution().setStockId(this.stockAnalysis.getStock().getSymbol());
                 this.stockAnalysis.getStockContext().setName(this.stockAnalysis.getStock().getCompany());
                 this.stockAnalysis.getStockContext().setSymbol(this.stockAnalysis.getStock().getSymbol());
+                this.stockAnalysis.getStock().setExpertsRecommendationCoefficient(ERC);
 
                 if (saveInDatabase) {
                     this.stockService.add(this.stockAnalysis.getStock());

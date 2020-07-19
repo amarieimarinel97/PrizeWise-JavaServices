@@ -51,13 +51,20 @@ public class ExpertRecommendationWorker extends NotifyingThread {
         }
 
         Double ERC1 = computeExpertsRecommendationCoefficient(recommendations);
-        ERC1 = ERC1 > 5 ? 5 : ERC1;
         String theirRating = document.select("div.rating-label").text();
-        Double ERC2 = theirRating.isEmpty() ? ERC1 : 5 - 2.5 * (Double.parseDouble(theirRating) - 1);
-        Double result = theirRating.isEmpty() ? ERC1 * 2 : (ERC1 + ERC2);
-        result = result < 0 ? 0 : result;
-        result = result > 10 ? 10 : result;
+        Double[] oldInterval = new Double[]{5.0, 1.0};
+        Double[] newInterval = new Double[]{0.0, 10.0};
+
+        Double ERC2 = theirRating.isEmpty() ? ERC1 : computeERC2(Double.parseDouble(theirRating), oldInterval, newInterval);
+        Double result = theirRating.isEmpty() ? ERC1 : (ERC1 + ERC2) / 2.0;
+        result = result < 0 ? 0 : result > 10 ? 10 : result;
         stock.setExpertsRecommendationCoefficient(result);
+    }
+
+    private Double computeERC2(Double x, Double[] oldInterval, Double[] newInterval) {
+        Double minOld = oldInterval[0], maxOld = oldInterval[1];
+        Double minNew = newInterval[0], maxNew = newInterval[1];
+        return (maxNew - minNew) / (maxOld - minOld) * (x - maxOld) + maxNew;
     }
 
     private Date getDate(String dateStr) {
@@ -88,31 +95,32 @@ public class ExpertRecommendationWorker extends NotifyingThread {
         for (Recommendation currentRecommendation : recommendations) {
             double currentCoefficient = 0.0;
             switch (currentRecommendation.getText().toLowerCase()) {
-                case "upgraded to market outperform":
                 case "upgraded to buy":
-                    currentCoefficient = 5.0;
+                    currentCoefficient = 10.0;
                     break;
                 case "upgraded to overweight":
-                    currentCoefficient = 2.5;
+                case "upgraded to market outperform":
+                    currentCoefficient = 7.5;
                     break;
                 case "hold":
-                    currentCoefficient = 0.0;
+                    currentCoefficient = 5.0;
                     break;
                 case "downgraded to underweight":
-                    currentCoefficient = -2.5;
-                    break;
                 case "downgraded to market underperform":
+                    currentCoefficient = 2.5;
+                    break;
                 case "downgraded to sell":
-                    currentCoefficient = -5.0;
+                    currentCoefficient = 0.0;
                     break;
                 default:
                     continue;
             }
-            currentRecommendation.setPoints(currentCoefficient * 1.5 * getDateDiff(maxDate, currentRecommendation.getDate(), TimeUnit.DAYS) / daysInterval);
+            Double dateWeightedCoefficient = currentCoefficient - (currentCoefficient - 5.0) * (getDateDiff(maxDate, currentRecommendation.getDate(), TimeUnit.DAYS) / daysInterval);
+            currentRecommendation.setPoints(0.7 * currentCoefficient + 0.3 * dateWeightedCoefficient);
             totalRecommendationPoints += currentRecommendation.getPoints();
             ++totalRecommendations;
         }
-        return totalRecommendationPoints / totalRecommendations; // TODO: bug, bad formula have to redo like on HOC
+        return totalRecommendationPoints / totalRecommendations;
     }
 
     public static long getDateDiff(Date date1, Date date2, TimeUnit timeUnit) {

@@ -1,5 +1,6 @@
 package com.tuiasi.utils;
 
+import com.tuiasi.central_module.model.StockAnalysis;
 import com.tuiasi.exception.ObjectNotFoundException;
 import com.tuiasi.crawler_module.model.Article;
 import com.tuiasi.crawler_module.model.StockContext;
@@ -37,7 +38,9 @@ public class StockUtils {
         return new String[]{symbol, companyName};
     }
 
-
+    public Double computeERCFromStockAnalysis(StockAnalysis stockAnalysis){
+        return 0.5 * stockAnalysis.getStock().getExpertsRecommendationCoefficient() + 0.5 * (stockAnalysis.getStock().getExpertsRecommendationCoefficient() + stockAnalysis.getStock().getHistoryOptimismCoefficient() + stockAnalysis.getStock().getNewsOptimismCoefficient()) / 3.0;
+    }
 
     public List<StockContext> randomlyFilterOutElements(List<StockContext> input, int noOfElements) {
         Random rand = new Random();
