@@ -46,9 +46,9 @@ public class StockContextRepository implements ICrudRepository<StockContext, Str
             entityTransaction.begin();
             entityManager.persist(stockContext);
             entityTransaction.commit();
-            log.info("Sector with sector: " + stockContext.getSector() + " inserted.");
+            log.info("Stock context: " + stockContext.getSymbol() + " inserted.");
         } catch (Exception e) {
-            log.error("Sector with sector: " + stockContext.getSector() + " could not be inserted.");
+            log.error("Stock context: " + stockContext.getSymbol() + " could not be inserted.");
             log.error(e.getMessage());
             entityTransaction.rollback();
         }

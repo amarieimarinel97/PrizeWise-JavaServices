@@ -11,34 +11,44 @@ import org.springframework.web.client.RestTemplate;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Component
 @Slf4j
 public class StockUtils {
     public String[] searchStockByCompany(String searchKey) {
-        final String uri = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query=" + searchKey + "&region=1&lang=en&callback=YAHOO.Finance.SymbolSuggest.ssCallback";
-
+        final String uri = SYMBOL_URL_BEGINNING + encodeInput(searchKey) + SYMBOL_URL_ENDING;
         String[] symbols = new RestTemplate().getForObject(uri, String.class).split("\"");
 
         int i;
         String symbol = "";
         String companyName = "";
+        boolean symbolFound = false;
         for (i = 0; i < symbols.length; ++i) {
             if (symbols[i].equals("symbol")) {
                 symbol = symbols[i + 2];
                 companyName = symbols[i + 6];
+                symbolFound = true;
                 break;
             }
         }
 
-        if (i == symbols.length || !symbol.matches("[a-zA-Z0-9]+"))
-            throw new ObjectNotFoundException("Stock symbol not found.");
+        if (!symbolFound || !symbol.matches("[a-zA-Z0-9]+"))
+            throw new ObjectNotFoundException("Stock symbol not found: " + searchKey);
 
         return new String[]{symbol, companyName};
     }
 
-    public Double computeERCFromStockAnalysis(StockAnalysis stockAnalysis){
+    private String encodeInput(String input) {
+        String value = (input + " ").split(" ")[0];
+        value = (value + ".").split("\\.")[0];
+        return value;
+    }
+
+    public Double computeERCFromStockAnalysis(StockAnalysis stockAnalysis) {
         return 0.5 * stockAnalysis.getStock().getExpertsRecommendationCoefficient() + 0.5 * (stockAnalysis.getStock().getExpertsRecommendationCoefficient() + stockAnalysis.getStock().getHistoryOptimismCoefficient() + stockAnalysis.getStock().getNewsOptimismCoefficient()) / 3.0;
     }
 
@@ -103,8 +113,7 @@ public class StockUtils {
         }
         return result.toString();
     }
-
-
-
+    private final String SYMBOL_URL_BEGINNING = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query=";
+    private final String SYMBOL_URL_ENDING = "&region=1&lang=en&callback=YAHOO.Finance.SymbolSuggest.ssCallback";
 
 }

@@ -1,1 +1,1 @@
-# Diploma
+# Repository used to deploy Java Services Project
