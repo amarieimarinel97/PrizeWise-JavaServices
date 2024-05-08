@@ -6,6 +6,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 @Builder
@@ -47,4 +48,8 @@ public class Stock {
     @Transient
     @JsonIgnore
     private Set<Article> articles;
+
+    @Transient
+    @JsonIgnore
+    private List<Post> posts;
 }

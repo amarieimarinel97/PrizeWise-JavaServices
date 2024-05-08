@@ -1,6 +1,8 @@
 package com.tuiasi.central_module.controller;
 
 
+import com.tuiasi.central_module.model.Dashboard;
+import com.tuiasi.central_module.model.DashboardDTO;
 import com.tuiasi.central_module.model.StockAnalysis;
 import com.tuiasi.central_module.model.utils.StockInformationWithTimestamp;
 import com.tuiasi.central_module.service.MainService;
@@ -53,6 +55,11 @@ public class MainController {
         return mainService.getTopPopularStocks(numberOfStocks.orElse(DEFAULT_NO_OF_STOCKS));
     }
 
+    @PostMapping("/dashboard")
+    public Dashboard getDashboard(@RequestBody DashboardDTO input) {
+        return mainService.getDashboard(input);
+    }
+
     @PostMapping("/history")
     public List<StockInformationWithTimestamp> getHistoryOfStocks(@RequestBody SymbolsTimestampedList symbolsTimestampedList) {
         return mainService.getListOfStocks(symbolsTimestampedList.getSymbols(), DEFAULT_NO_OF_STOCKS);
@@ -60,6 +67,11 @@ public class MainController {
 
     @PostMapping("/watchlist")
     public List<StockInformationWithTimestamp> getMyWatchlistOfStocks(@RequestBody SymbolsTimestampedList symbolsTimestampedList) {
+        return mainService.getListOfStocks(symbolsTimestampedList.getSymbols(), DEFAULT_NO_OF_STOCKS);
+    }
+
+    @PostMapping("/portfolio")
+    public List<StockInformationWithTimestamp> getMyPortfolioStocks(@RequestBody SymbolsTimestampedList symbolsTimestampedList) {
         return mainService.getListOfStocks(symbolsTimestampedList.getSymbols(), DEFAULT_NO_OF_STOCKS);
     }
 

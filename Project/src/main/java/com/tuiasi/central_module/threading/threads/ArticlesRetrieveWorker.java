@@ -82,11 +82,11 @@ public class ArticlesRetrieveWorker extends NotifyingThread implements ThreadLis
         } catch (IOException e) {
             throw new ObjectNotFoundException("Symbol " + stockAnalysis.getStock().getSymbol() + " not found.");
         }
-        Elements articlesHTML = doc.select("div.news-by-company");
-        articlesHTML.select("div.col-md-12").forEach(element ->
+        Elements articlesHTML = doc.select("div.latest-news div.latest-news__story");
+        articlesHTML.forEach(element ->
                 articles.add(Article.builder()
                         .title(element.select(".news-link").text())
-                        .lastUpdated(getArticleLastUpdated(element.select("span").text()))
+                        .lastUpdated(getArticleLastUpdated(element.select("time.latest-news__date").text()))
                         .link(getArticleLink(element))
                         .stock(stockAnalysis.getStock())
                         .build())
@@ -136,7 +136,7 @@ public class ArticlesRetrieveWorker extends NotifyingThread implements ThreadLis
 
 
     private String getArticleLink(Element element) {
-        String link = element.select("a").attr("href");
+        String link = element.select("a.news-link").attr("href");
         if (link.startsWith("/news/stock"))
             link = "http://markets.businessinsider.com" + link;
         return link;

@@ -14,6 +14,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ExpertRecommendationWorker extends NotifyingThread {
     private Stock stock;
@@ -34,24 +36,17 @@ public class ExpertRecommendationWorker extends NotifyingThread {
         } catch (IOException e) {
             throw new ObjectNotFoundException("Symbol " + stock.getSymbol() + " not found.");
         }
-        Iterator<Element> recommendationsIterator = document.select("div.box > div.hidden-xs tr > td.h5, div.box > div.hidden-xs tr > td:eq(4)").iterator();
+        Iterator<Element> recommendationsIterator = document.select("div#analyst_opinions tbody.table__tbody > tr").iterator();
 
         List<Recommendation> recommendations = new ArrayList<>();
         while (recommendationsIterator.hasNext()) {
-            Recommendation recommendation = Recommendation.builder().build();
             String nextElement = recommendationsIterator.next().text();
-            if (isDateFormat(nextElement)) {
-                recommendation.setDate(getDate(nextElement));
-                recommendation.setText(recommendationsIterator.next().text());
-            } else {
-                recommendation.setText(nextElement);
-                recommendation.setDate(getDate(recommendationsIterator.next().text()));
-            }
+            Recommendation recommendation = computeRecommendation(nextElement);
             recommendations.add(recommendation);
         }
 
         Double ERC1 = computeExpertsRecommendationCoefficient(recommendations);
-        String theirRating = document.select("div.rating-label").text();
+        String theirRating = document.select("div.moodys-rating__container > span.moodys-rating__rating").text();
         Double[] oldInterval = new Double[]{5.0, 1.0};
         Double[] newInterval = new Double[]{0.0, 10.0};
 
@@ -61,20 +56,36 @@ public class ExpertRecommendationWorker extends NotifyingThread {
         stock.setExpertsRecommendationCoefficient(result);
     }
 
+    private Recommendation computeRecommendation(String recommendationText) {
+        Recommendation recommendation = Recommendation.builder().build();
+        String[] tokens = recommendationText.split(" ");
+        recommendation.setDate(getDate(recommendationText));
+        recommendation.setText(tokens[tokens.length - 3]);
+        return recommendation;
+    }
+
     private Double computeERC2(Double x, Double[] oldInterval, Double[] newInterval) {
         Double minOld = oldInterval[0], maxOld = oldInterval[1];
         Double minNew = newInterval[0], maxNew = newInterval[1];
         return (maxNew - minNew) / (maxOld - minOld) * (x - maxOld) + maxNew;
     }
 
-    private Date getDate(String dateStr) {
-        String[] mmddyy = dateStr.split("/");
-        Date result = new Date();
-        result.setMonth(Integer.parseInt(mmddyy[0].substring(Math.max(mmddyy[0].length() - 2, 0))) - 1);
-        result.setDate(Integer.parseInt(mmddyy[1]));
-        result.setYear(100 + Integer.parseInt(mmddyy[2].substring(0, Math.min(mmddyy[2].length(), 2))));
-        return result;
+    private static final String DATE_REGEX = "\\b([0-9]{1,2})\\/([0-9]{1,2})\\/([0-9]{2,4})\\b";
 
+    private Date getDate(String input) {
+
+        Matcher matcher = Pattern.compile(DATE_REGEX).matcher(input);
+        if (matcher.find()) {
+            String match = matcher.group();
+            String[] mmddyy = match.split("/");
+            Date result = new Date();
+            result.setMonth(Integer.parseInt(mmddyy[0].substring(Math.max(mmddyy[0].length() - 2, 0))) - 1);
+            result.setDate(Integer.parseInt(mmddyy[1]));
+            result.setYear(100 + Integer.parseInt(mmddyy[2].substring(0, Math.min(mmddyy[2].length(), 2))));
+            return result;
+        }
+
+        throw new ObjectNotFoundException("Could not retrieve date from input");
     }
 
     private boolean isDateFormat(String input) {
@@ -95,22 +106,14 @@ public class ExpertRecommendationWorker extends NotifyingThread {
         for (Recommendation currentRecommendation : recommendations) {
             double currentCoefficient = 0.0;
             switch (currentRecommendation.getText().toLowerCase()) {
-                case "upgraded to buy":
-                    currentCoefficient = 10.0;
-                    break;
-                case "upgraded to overweight":
-                case "upgraded to market outperform":
-                    currentCoefficient = 7.5;
+                case "buy":
+                    currentCoefficient = 9.0;
                     break;
                 case "hold":
                     currentCoefficient = 5.0;
                     break;
-                case "downgraded to underweight":
-                case "downgraded to market underperform":
-                    currentCoefficient = 2.5;
-                    break;
-                case "downgraded to sell":
-                    currentCoefficient = 0.0;
+                case "sell":
+                    currentCoefficient = 1.0;
                     break;
                 default:
                     continue;

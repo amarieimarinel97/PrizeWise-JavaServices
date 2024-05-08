@@ -25,7 +25,7 @@ public class StockInformationWorker extends NotifyingThread {
     public void crawlStockInfo(Stock stock) {
         Document doc = null;
         try {
-            doc = Jsoup.connect("http://markets.businessinsider.com/stocks/" + stock.getSymbol() + "-stock").get();
+            doc = Jsoup.connect("http://markets.businessinsider.com/stocks/" + stock.getSymbol().trim() + "-stock").get();
         } catch (IOException e) {
             throw new ObjectNotFoundException("Symbol " + stock.getSymbol() + " not found.");
         }
@@ -35,8 +35,9 @@ public class StockInformationWorker extends NotifyingThread {
 
     private double getPriceFromPage(Document doc) {
         return Double.parseDouble(
-                doc.select("div > div[data-field=Mid] > span.push-data")
+                doc.select("div.price-section__values > span.price-section__current-value")
                         .text()
+                        .split(" ")[0]
                         .replaceAll("[^0-9.]", ""));
     }
 }

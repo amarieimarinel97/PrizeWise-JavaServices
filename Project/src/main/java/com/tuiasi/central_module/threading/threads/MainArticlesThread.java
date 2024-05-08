@@ -37,9 +37,10 @@ public class MainArticlesThread implements ThreadListener {
 
 
     public void run(boolean saveInDatabase, Optional<Long> cacheValidityTimeMillis) throws InterruptedException {
+
         this.saveInDatabase = saveInDatabase;
         Optional<Stock> preexistingStock = stockRepository.get(this.stockAnalysis.getStock().getSymbol());
-        Set<Article> articlesWithBody = new HashSet<>();
+        List<Article> articlesWithBody = new ArrayList<>();
         if (preexistingStock.isPresent())
             articlesWithBody = articleService.getLastArticlesWithBodiesBySymbol(this.stockAnalysis.getStock().getSymbol(), NO_OF_ARTICLES_TO_RETRIEVE);
 
@@ -50,6 +51,7 @@ public class MainArticlesThread implements ThreadListener {
                             this.stockAnalysis.getStock().getSymbol(), NO_OF_ARTICLES_TO_RETRIEVE));
             this.stockAnalysis.getStock().setViews(this.stockAnalysis.getStock().getViews() + 1);
             System.gc();
+
         } else {
             List<NotifyingThread> workers = new ArrayList<>();
             workers.add(new StockInformationWorker(this.stockAnalysis.getStock()));
@@ -64,7 +66,6 @@ public class MainArticlesThread implements ThreadListener {
 
             for (NotifyingThread worker : workers)
                 worker.join();
-
 
         }
 

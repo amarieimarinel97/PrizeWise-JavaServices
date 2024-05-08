@@ -1,0 +1,4 @@
+com\tuiasi\crudtest\ArticleCRUDTest.class
+com\tuiasi\crudtest\StockCRUDTest.class
+com\tuiasi\crudtest\StockEvolutionCRUDTest.class
+com\tuiasi\crudtest\StockContextCRUDTest.class

@@ -21,25 +21,25 @@ import java.util.*;
 public class StockUtils {
     public String[] searchStockByCompany(String searchKey) {
         final String uri = SYMBOL_URL_BEGINNING + encodeInput(searchKey) + SYMBOL_URL_ENDING;
-        String[] symbols = new RestTemplate().getForObject(uri, String.class).split("\"");
+//        String[] symbols = new RestTemplate().getForObject(uri, String.class).split("\"");
+//
+//        int i;
+//        String symbol = "";
+//        String companyName = "";
+//        boolean symbolFound = false;
+//        for (i = 0; i < symbols.length; ++i) {
+//            if (symbols[i].equals("symbol")) {
+//                symbol = symbols[i + 2];
+//                companyName = symbols[i + 6];
+//                symbolFound = true;
+//                break;
+//            }
+//        }
+//
+//        if (!symbolFound || !symbol.matches("[a-zA-Z0-9]+"))
+//            throw new ObjectNotFoundException("Stock symbol not found: " + searchKey);
 
-        int i;
-        String symbol = "";
-        String companyName = "";
-        boolean symbolFound = false;
-        for (i = 0; i < symbols.length; ++i) {
-            if (symbols[i].equals("symbol")) {
-                symbol = symbols[i + 2];
-                companyName = symbols[i + 6];
-                symbolFound = true;
-                break;
-            }
-        }
-
-        if (!symbolFound || !symbol.matches("[a-zA-Z0-9]+"))
-            throw new ObjectNotFoundException("Stock symbol not found: " + searchKey);
-
-        return new String[]{symbol, companyName};
+        return new String[]{searchKey, searchKey};
     }
 
     private String encodeInput(String input) {

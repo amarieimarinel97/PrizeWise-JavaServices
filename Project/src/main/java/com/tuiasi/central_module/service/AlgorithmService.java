@@ -32,7 +32,7 @@ public class AlgorithmService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("symbol", stockInfo.getStock().getSymbol());
         jsonObject.put("days", days);
-        RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate(); // TODO(mamariei): check here
         ResponseEntity<StockEvolution> result = restTemplate.postForEntity(uri, jsonObject, StockEvolution.class);
         if (result.hasBody()) {
             stockInfo.setStockEvolution(result.getBody());
@@ -84,6 +84,10 @@ public class AlgorithmService {
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<SentimentAnalysisResult> result = restTemplate.postForEntity(uri, jsonObject, SentimentAnalysisResult.class);
         return result.getBody().getSentiment_analysis();
+    }
+
+    public double[] getSentimentAnalysis(List<String> text) {
+        return getSentimentAnalysis(text.toArray(String[]::new));
     }
 
 

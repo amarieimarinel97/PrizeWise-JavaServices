@@ -89,9 +89,18 @@ public class ArticleService implements ICrudService<Article, Integer> {
         }
     }
 
-    public Set<Article> getLastArticlesWithBodiesBySymbol(String symbol, int numberOfArticles) {
+    public List<Article> getLastArticlesWithBodiesBySymbol(String symbol, int numberOfArticles) {
         try {
             return repository.getLastArticlesWithBodiesBySymbol(symbol, numberOfArticles);
+        } catch (Exception e) {
+            log.error("Could not retrieve articles: " + e.getMessage());
+            throw new DatabaseConnectionException(e);
+        }
+    }
+
+    public List<Article> getLastArticlesWithBodies(int numberOfArticles) {
+        try {
+            return repository.getRecentArticles(numberOfArticles);
         } catch (Exception e) {
             log.error("Could not retrieve articles: " + e.getMessage());
             throw new DatabaseConnectionException(e);

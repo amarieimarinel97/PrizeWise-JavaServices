@@ -27,6 +27,7 @@ public abstract class NotifyingThread extends Thread {
             doRun();
             notifyListeners(true);
         } catch (Exception e) {
+            e.printStackTrace();
             notifyListeners(false);
         }
     }

@@ -6,6 +6,7 @@ import com.tuiasi.crawler_module.repository.StockRepository;
 import com.tuiasi.central_module.service.AlgorithmService;
 import com.tuiasi.crawler_module.service.ArticleService;
 import com.tuiasi.central_module.service.StockEvolutionService;
+import com.tuiasi.crawler_module.service.PostService;
 import com.tuiasi.crawler_module.service.StockContextService;
 import com.tuiasi.crawler_module.service.StockService;
 import com.tuiasi.central_module.threading.NotifyingThread;
@@ -20,6 +21,7 @@ public class MainThread implements ThreadListener {
     private AlgorithmService algorithmService;
     private StockUtils stockUtils;
     private ArticleService articleService;
+    private PostService postService;
     private StockService stockService;
     private StockEvolutionService stockEvolutionService;
     private StockRepository stockRepository;
@@ -29,11 +31,12 @@ public class MainThread implements ThreadListener {
     public boolean allSuccessful;
 
 
-    public MainThread(StockAnalysis stockAnalysis, AlgorithmService algorithmService, ArticleService articleService, StockService stockService, StockUtils stockUtils, StockEvolutionService stockEvolutionService, StockRepository stockRepository, StockContextService stockContextService) {
+    public MainThread(StockAnalysis stockAnalysis, AlgorithmService algorithmService, ArticleService articleService, PostService postService, StockService stockService, StockUtils stockUtils, StockEvolutionService stockEvolutionService, StockRepository stockRepository, StockContextService stockContextService) {
         this.stockAnalysis = stockAnalysis;
         this.algorithmService = algorithmService;
         this.stockUtils = stockUtils;
         this.articleService = articleService;
+        this.postService = postService;
         this.stockService = stockService;
         this.noOfAliveThreads = 0;
         this.stockEvolutionService = stockEvolutionService;
@@ -50,6 +53,7 @@ public class MainThread implements ThreadListener {
             this.stockAnalysis.setArticles(
                     articleService.getLastArticlesBySymbol(
                             this.stockAnalysis.getStock().getSymbol(), NO_OF_ARTICLES_TO_RETRIEVE));
+            this.stockAnalysis.setPosts(postService.getLastPostsBySymbol( this.stockAnalysis.getStock().getSymbol(), NO_OF_POSTS_TO_RETRIEVE));
             this.stockAnalysis.setStockEvolution(stockEvolutionService.get(this.stockAnalysis.getStock().getSymbol()));
             this.stockAnalysis.setStockContext(stockContextService.get(this.stockAnalysis.getStock().getSymbol()));
             this.stockAnalysis.getStock().setViews(this.stockAnalysis.getStock().getViews() + 1);
@@ -61,6 +65,7 @@ public class MainThread implements ThreadListener {
             workers.add(new StockRegressionWorker(this.algorithmService, this.stockAnalysis));
             workers.add(new StockContextWorker(this.algorithmService, this.stockAnalysis));
             workers.add(new ArticlesRetrieveWorker(this.algorithmService, this.stockAnalysis, Optional.empty()));
+            workers.add(new SocialScraperWorker(this.algorithmService, this.stockAnalysis));
             this.stockAnalysis.getStock().setViews(preexistingStock.map(stock -> stock.getViews() + 1).orElse(1));
             this.noOfAliveThreads = workers.size();
 
@@ -96,6 +101,7 @@ public class MainThread implements ThreadListener {
                 if (saveInDatabase) {
                     this.stockService.add(this.stockAnalysis.getStock());
                     this.stockAnalysis.getArticles().forEach(article -> articleService.add(article));
+                    this.stockAnalysis.getPosts().forEach(post -> postService.add(post));
                     this.stockEvolutionService.add(stockAnalysis.getStockEvolution());
                     this.stockContextService.add(stockAnalysis.getStockContext());
                 }
@@ -107,6 +113,7 @@ public class MainThread implements ThreadListener {
 
     public final long DEFAULT_CACHE_VALIDITY_TIME_MILLIS = 3600000;
     private final int NO_OF_ARTICLES_TO_RETRIEVE = 50;
+    private final int NO_OF_POSTS_TO_RETRIEVE = 20;
 
 
     private boolean isCacheValid(Stock stock, long cacheValidityMillis) {
