@@ -68,8 +68,12 @@ public class MainService {
         } catch (ObjectNotFoundException e) {
             log.error("Could not find stock " + stock);
             Arrays.stream(e.getStackTrace()).map(s -> s + "\n").reduce((a, b) -> a + b).ifPresent(log::error);
+            log.warn("Exception1:"+ e.getMessage());
+            e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
+            log.warn("Exception2:"+ e.getMessage());
+            e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
         }
     }
